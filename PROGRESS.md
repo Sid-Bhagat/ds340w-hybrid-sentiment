@@ -10,13 +10,7 @@ Step 1 DONE 12:58. Step 2 (1c) DONE 13:06: membership.parquet mask, 107/310 remo
 Phase 2 DONE 13:08 (panel 1,329,657 rows, 545 tickers; 13/13 leakage tests pass).
 Phase 3 DONE 13:12 (models.py 2 min, evaluate.py -> results/*.csv + tables/*.tex).
 Phase 3b LSTM DONE 13:13 (evaluate rerun incl. LSTM). Figures DONE 13:20.
-Phase 4 DONE 13:30. Session 3b DONE 13:23: Li-7 audit (no bug; raw files lack news), robustness
-(news-only H1, 5-day rebalance), LSTM check (likely undertrained), results/FROZEN.md written. STOPPED.
-Session 3c DONE 13:59: SEC 8-K extension (edgar.py, models_m4.py -> M4, LGBM_M4), tests 18/18,
-SUMMARY/FROZEN updated.
-Session 3d DONE 14:15: relevance-filter robustness (relevance.py, models_rel.py -> M2_rel/M3_rel); main spec
-unchanged (32 CSVs, diff 0). Session 3e DONE 14:45: rejected-headlines diagnostic (models_irr.py);
-39 CSVs diff 0. NO MORE ADDITIONS.
+Sessions 3-3e (12:50-14:45): steps 1-2, phases 2-4, audit, robustness, M4, _rel, _irr (see DECISIONS.md).
 Session 4 DONE (15:15): infra fixes + gate passed (option 1); 2023 HOLDOUT RUN ONCE with FINAL=1 per FROZEN.md.
 Outputs: results/final_2023/ (2023-only tests), results/final_2023/pooled_2018_2023/; figures now 2018-23.
 Verdict: no sentiment hypothesis confirmed; H1 reversed (Full t -2.53, Li-7 t -2.27); H3 confirmed in-sample.
