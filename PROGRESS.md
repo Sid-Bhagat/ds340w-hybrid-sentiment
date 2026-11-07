@@ -22,6 +22,7 @@ Next: verify it, make news_filter.py read both files + dedupe, then src/events.p
 | FNSPID download | `python src/download_fnspid.py` (nohup) | 2091 (finished) | logs/download_fnspid.log | 2026-11-07 05:54 | data/raw/Stock_news/All_external.csv, 5731397037 bytes, sha256 5d4c018036bd82ca821da71b7a9c0c7db3289642e0fc6f897ea69f4a0c5135c3, log ends "VERIFIED size+sha256 OK" |
 | news filter | `python src/news_filter.py` (nohup) | 2501 | logs/news_filter.log | 2026-11-07 06:02:28 | data/processed/news_filtered.parquet + news_sealed_2023.parquet; log ends DONE |
 | big FNSPID download | `python src/download_fnspid.py Stock_news/nasdaq_exteral_data.csv` (nohup) | 2829 | logs/download_nasdaq.log | 2026-11-07 06:04:47 | data/raw/Stock_news/nasdaq_exteral_data.csv = 23232979597 bytes; log ends VERIFIED |
+| finbert (pass 1, All_external headlines only) | `python src/finbert_score.py` (nohup) | 3625 | logs/finbert.log | 2026-11-07 06:06:52 | data/processed/finbert_ckpt/part_*.parquet (cache by headline; resumable) then news_scored.parquet. Rerun later after big-file filter: only NEW headlines get scored |
 Resume rule: check `ps -p 2091` and log tail before rerunning. HF resumes partial downloads (.incomplete in data/raw/.cache).
 
 ## Key file map

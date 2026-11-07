@@ -10,10 +10,10 @@ import pandas as pd
 
 from config import PROC, RAW, SEAL_DATE, START
 
-SRC = RAW / "Stock_news" / "All_external.csv"
+SRCS = [RAW / "Stock_news" / "All_external.csv", RAW / "Stock_news" / "nasdaq_exteral_data.csv"]
 OUT = PROC / "news_filtered.parquet"
 SEALED = PROC / "news_sealed_2023.parquet"
-CHUNK = 500_000
+CHUNK = 100_000          # the big file has full article text, keep chunks small (15 GB RAM)
 
 
 def trading_days():
@@ -55,28 +55,33 @@ def main():
     print("calendar", cal.min().date(), cal.max().date(), len(cal), flush=True)
     keep, sealed = [], []
     n_read = n_tick = 0
-    reader = pd.read_csv(SRC, usecols=["Date", "Article_title", "Stock_symbol"], chunksize=CHUNK,
-                         dtype=str)
-    for i, ch in enumerate(reader):
-        n_read += len(ch)
-        ch = ch.dropna(subset=["Date", "Article_title", "Stock_symbol"])
-        ch = ch.loc[ch["Stock_symbol"].isin(tickers)]
-        ch = ch.loc[ch["Date"] >= START]                    # string compare is fine for ISO dates
-        n_tick += len(ch)
-        if len(ch):
-            ts_et, trade = assign_trade_date(ch["Date"].str.replace(" UTC", "", regex=False)
-                                             .where(ch["Date"].str.len() > 10, ch["Date"]), cal)
-            out = pd.DataFrame({"ticker": ch["Stock_symbol"].replace(to_yf), "ts_et": ts_et,
-                                "trade_date": trade, "headline": ch["Article_title"].str.strip()})
-            out = out.dropna(subset=["ts_et"])
-            is_sealed = out["trade_date"].isna() | (out["trade_date"] >= pd.Timestamp(SEAL_DATE))
-            keep.append(out.loc[~is_sealed])
-            sealed.append(out.loc[is_sealed])
-        if i % 10 == 0:
-            print(f"chunk {i} read={n_read} kept_ticker_rows={n_tick}", flush=True)
+    for src in SRCS:
+        if not src.exists():
+            print("MISSING", src, flush=True)
+            continue
+        reader = pd.read_csv(src, usecols=["Date", "Article_title", "Stock_symbol"], chunksize=CHUNK,
+                             dtype=str)
+        for i, ch in enumerate(reader):
+            n_read += len(ch)
+            ch = ch.dropna(subset=["Date", "Article_title", "Stock_symbol"])
+            ch = ch.loc[ch["Stock_symbol"].isin(tickers)]
+            ch = ch.loc[ch["Date"] >= START]                # string compare is fine for ISO dates
+            n_tick += len(ch)
+            if len(ch):
+                ts_et, trade = assign_trade_date(ch["Date"].str.replace(" UTC", "", regex=False), cal)
+                out = pd.DataFrame({"ticker": ch["Stock_symbol"].replace(to_yf), "ts_et": ts_et,
+                                    "trade_date": trade, "headline": ch["Article_title"].str.strip()})
+                out = out.dropna(subset=["ts_et"])
+                is_sealed = out["trade_date"].isna() | (out["trade_date"] >= pd.Timestamp(SEAL_DATE))
+                keep.append(out.loc[~is_sealed])
+                sealed.append(out.loc[is_sealed])
+            if i % 20 == 0:
+                print(f"{src.name} chunk {i} read={n_read} kept_ticker_rows={n_tick}", flush=True)
     for name, parts, path in [("main", keep, OUT), ("sealed", sealed, SEALED)]:
         df = pd.concat(parts, ignore_index=True)
-        df = df.drop_duplicates(subset=["ticker", "ts_et", "headline"]).reset_index(drop=True)
+        # same story can appear in both files / twice: keep the earliest timestamp per ticker+day+headline
+        df = (df.sort_values("ts_et").drop_duplicates(subset=["ticker", "trade_date", "headline"])
+                .reset_index(drop=True))
         df.to_parquet(str(path) + ".tmp", index=False)
         os.replace(str(path) + ".tmp", path)
         print(name, df.shape, df["ts_et"].min(), df["ts_et"].max(), df["ticker"].nunique(), "tickers",
