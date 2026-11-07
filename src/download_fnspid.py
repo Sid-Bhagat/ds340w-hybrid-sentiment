@@ -7,7 +7,8 @@ from huggingface_hub import HfApi, hf_hub_download
 
 import config
 
-REPO, FILE = "Zihan1004/FNSPID", "Stock_news/All_external.csv"
+REPO = "Zihan1004/FNSPID"
+FILE = sys.argv[1] if len(sys.argv) > 1 else "Stock_news/All_external.csv"
 
 
 def main():
