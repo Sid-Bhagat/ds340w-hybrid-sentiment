@@ -54,6 +54,11 @@
   main-spec news-day gain comes mostly from headlines about other companies or the market. Main results
   unchanged (diff 0). Added to FROZEN.md as a robustness variant.
 
+## Update (14:45): rejected-headlines diagnostic (last addition before 2023)
+- On news days the sentiment gain sits in headlines that do NOT name the company: rejected-only gain 9.7e-5
+  [2.3e-6, 1.9e-4], p = 0.045, against relevant-only -4.0e-6 [-6.8e-5, 6.0e-5] with a similar SE. That
+  points to spillover (sector/peer/market news), not low power. Main results unchanged (39 CSVs, diff 0).
+
 ## Caveats for the paper (details in SUMMARY.md)
 - 2021 news is thin: 61,896 headlines, 24.5% of stock-days have news (vs about 53% in 2018-19).
 - Li-7 news is sparse in FNSPID: AMZN and META only in 2020, MSFT only in 2022, AAPL only in 2020 and 2022.

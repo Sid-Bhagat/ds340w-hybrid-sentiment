@@ -15,7 +15,8 @@ Phase 4 DONE 13:30. Session 3b DONE 13:23: Li-7 audit (no bug; raw files lack ne
 Session 3c DONE 13:59: SEC 8-K extension (edgar.py, models_m4.py -> M4, LGBM_M4), tests 18/18,
 SUMMARY/FROZEN updated.
 Session 3d DONE 14:15: relevance-filter robustness (relevance.py, models_rel.py -> M2_rel/M3_rel); main spec
-unchanged (32 CSVs, diff 0). STOPPED. Next: only on Sid's "open 2023" -> follow results/FROZEN.md exactly.
+unchanged (32 CSVs, diff 0). Session 3e DONE 14:45: rejected-headlines diagnostic (models_irr.py);
+39 CSVs diff 0. NO MORE ADDITIONS (Sid). STOPPED. Next: only on "open 2023" -> follow results/FROZEN.md.
 
 ## Phase checklist
 - [x] Phase 0: universe + prices (data/processed/prices.parquet), committed dd03553
@@ -36,7 +37,7 @@ Resume rule: check `ps -p 2091` and log tail before rerunning. HF resumes partia
 
 ## Key file map
 - CLAUDE.md (rules/spec), PLAN.md, DECISIONS.md, PROGRESS.md
-- src/edgar.py (8-K), models_m4.py (M4), relevance.py + models_rel.py (M2_rel/M3_rel); src/config.py, prices.py, download_fnspid.py, news_filter.py, events.py, finbert_score.py, hand_check.py
+- src/edgar.py (8-K), models_m4.py (M4), relevance.py + models_rel.py + models_irr.py (_rel/_irr); src/config.py, prices.py, download_fnspid.py, news_filter.py, events.py, finbert_score.py, hand_check.py
 - data/processed: news_filtered/news_scored/news_sealed_2023.parquet, finbert_ckpt/ (all gitignored)
 - data/processed: prices.parquet (current), prices_removed.parquet, membership.parquet, hist_members(_audit).csv, universe.csv; sp500_changes_raw.csv is junk. src/tickers.py = alias rules. data/ gitignored
 

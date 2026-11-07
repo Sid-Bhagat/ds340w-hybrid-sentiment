@@ -101,12 +101,24 @@ specification (M0-M3, PLACEBO, LGBM, LSTM, M4) is unchanged and remains primary.
 - 2023 pipeline: after `finbert_score.py` and `features.py`, run `relevance.py` (its self-check must pass)
   and then `models_rel.py` before `evaluate.py`. relevance.py has no date constants to change.
 
+## Added before 2023 was opened, diagnostic for the relevance result: rejected-headlines sentiment (M2_irr/M3_irr)
+Requested by Sid on 2026-11-07 after the relevance result had been seen. **Diagnostic only**; the main
+specification stays primary. This is the last addition before 2023.
+- Sentiment from the headlines rejected by the relevance filter (complement of _rel), rebuilt with
+  `relevance.sentiment_block`. Models M2_irr, M3_irr, PLACEBO_irr (`src/models_irr.py`), same folds,
+  regimes, preprocessing, logit and seeds.
+- **Tests on 2023 (Full and Li-7):** H1_irr = M2_irr vs M1 on all test days and on has_news_irr == 1
+  days; PLACEBO_irr vs M1 and M2_irr vs PLACEBO_irr on rejected-news days (also all days). Plus the
+  comparison table `h1_variants` (all / relevant / rejected: gain, NW SE, 95% CI, t, p, news-day share,
+  n), reported for 2023 alone.
+- 2023 pipeline: after `relevance.py` and `models_rel.py`, run `models_irr.py`, then `evaluate.py`.
+
 ## Comparability note
 The FINAL run re-downloads adjusted prices and adds 2022-12-30 as a test row for 2022 (it gains a
 target), so the rerun 2018-2022 numbers may differ slightly from the frozen ones in SUMMARY.md. The
 frozen pre-2023 numbers stay as reported. 2023 is reported as a new section and the differences are noted.
 
-## Code at freeze (sha256, first 16 hex chars; updated with the M4 extension and relevance variant, 2026-11-07 ~14:15)
+## Code at freeze (sha256, first 16 hex chars; updated with M4, the relevance variant and the rejected-headlines diagnostic, 2026-11-07 ~14:45)
 | file | sha256 |
 |---|---|
 | `src/config.py` | `cc13fe7de36bcc78` |
@@ -125,7 +137,8 @@ frozen pre-2023 numbers stay as reported. 2023 is reported as a new section and 
 | `src/models_m4.py` | `9a9363b366c57448` |
 | `src/relevance.py` | `84f16b2dc7dbbabd` |
 | `src/models_rel.py` | `fcee2818c006d63b` |
-| `src/evaluate.py` | `fbe217656a101572` |
+| `src/models_irr.py` | `ae33ef6bcb3e2416` |
+| `src/evaluate.py` | `19ed2452526766ae` |
 | `src/figures.py` | `f3137415e4282af1` |
 | `tests/test_leakage.py` | `fccff241049e0e27` |
 Git: the commit that adds this file ("Freeze ...").

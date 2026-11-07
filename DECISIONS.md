@@ -54,3 +54,8 @@
 - **Main spec unchanged:** 32 pre-existing results CSVs identical (max abs change 0). hand_check_llm_A.csv byte-identical (other session's file; excluded from the numeric check).
 - **Result:** relevance filtering removes the Full-universe sentiment effect (H1_rel p 0.80; news days p 0.90; real vs shuffled p 0.44/0.54). The main news-day gain comes mostly from headlines that don't name the company. Li-7 H1_rel is p 0.088, but its placebo also beats M1 (p 0.045).
 - Timestamps in PROGRESS/DECISIONS/MORNING_REPORT/FROZEN for sessions 3b/3c were corrected to the git commit times (they had been estimated too late).
+
+## Session 3e (2026-11-07 14:30-14:45): rejected-headlines diagnostic (M2_irr/M3_irr), added before 2023
+- Sentiment rebuilt from the headlines the relevance filter rejected (`~relevant` in news_relevance.parquet, row-aligned with news_scored.parquet; alignment asserted on ticker + headline). Same `relevance.sentiment_block`, folds, regimes, prep, logit and seeds (`src/models_irr.py`; separate script so the frozen files are untouched). Tests: H1_irr (M2_irr vs M1), placebo_irr vs M1, M2_irr vs placebo_irr, on all days and on rejected-news days. `evaluate.h1_variants` gives the effect size + NW SE + 95% CI (gain ± 1.96 SE, SE = gain/t) for all/relevant/rejected.
+- Zero-difference check: 39 pre-existing results CSVs identical (max abs change 0); hand_check_llm_A.csv byte-identical.
+- Result (Full, news days): rejected-only gain 9.7e-5 [2.3e-6, 1.9e-4], p 0.045; relevant-only -4.0e-6 [-6.8e-5, 6.0e-5], p 0.90, with an SE similar to all-headlines (3.3e-5 vs 3.1e-5). Reading: spillover rather than low power; the rel vs irr difference is not formally tested. This is the last addition before 2023 (per Sid).

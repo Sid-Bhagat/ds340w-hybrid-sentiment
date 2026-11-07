@@ -490,6 +490,55 @@ half. On Li-7, H1_rel is borderline (t = 1.70, p = 0.088), but the relevant-sent
 (t = 2.00, p = 0.045), so that gain is not specific to real sentiment. The interaction is significant only
 in the 2018 training fit.
 
+## Diagnostic: rejected-headlines-only sentiment (M2_irr / M3_irr). Added before 2023 was opened, diagnostic for the relevance result
+Sentiment built only from the headlines the relevance filter **rejected** (the complement of the _rel
+set: 56.9% of headlines), with the same rebuild (`relevance.sentiment_block`), folds, regimes,
+preprocessing, logit and seeds (`src/models_irr.py`). Gain = mean daily log loss of M1 minus the M2
+variant (> 0: sentiment helps), Newey-West SE (5 lags), 95% CI = gain ± 1.96 SE. News-day share = share of
+2018-2022 test stock-days with at least one headline of that kind. News days = that variant's own news
+days. (`h1_variants_*.csv`)
+
+**Full universe**
+
+| news used | days | H1 gain (M2 variant vs M1) | NW SE | 95% CI | t | p | news-day share | n test days / stock-days |
+|---|---|---|---|---|---|---|---|---|
+| all headlines | all days | 1.65e-5 | 1.33e-5 | [-9.57e-6, 4.27e-5] | 1.24 | 0.214 | 0.402 | 1,258 / 574,824 |
+| all headlines | news days | 6.40e-5 | 3.13e-5 | [2.59e-6, 1.25e-4] | 2.04 | 0.041 | 0.402 | 1,258 / 230,886 |
+| relevant only | all days | -1.99e-6 | 7.73e-6 | [-1.71e-5, 1.32e-5] | -0.26 | 0.797 | 0.242 | 1,258 / 574,824 |
+| relevant only | news days | -3.95e-6 | 3.26e-5 | [-6.79e-5, 6.00e-5] | -0.12 | 0.904 | 0.242 | 1,258 / 138,858 |
+| rejected only | all days | 2.15e-5 | 1.44e-5 | [-6.61e-6, 4.97e-5] | 1.50 | 0.134 | 0.293 | 1,258 / 574,824 |
+| rejected only | news days | 9.70e-5 | 4.83e-5 | [2.30e-6, 1.92e-4] | 2.01 | 0.045 | 0.293 | 1,258 / 168,319 |
+
+**Li-7**
+
+| news used | days | H1 gain (M2 variant vs M1) | NW SE | 95% CI | t | p | news-day share | n test days / stock-days |
+|---|---|---|---|---|---|---|---|---|
+| all headlines | all days | 1.07e-4 | 9.83e-5 | [-8.60e-5, 2.99e-4] | 1.08 | 0.278 | 0.314 | 1,258 / 8,058 |
+| all headlines | news days | 1.23e-4 | 3.17e-4 | [-4.98e-4, 7.44e-4] | 0.39 | 0.697 | 0.314 | 1,208 / 2,534 |
+| relevant only | all days | 1.14e-4 | 6.71e-5 | [-1.71e-5, 2.46e-4] | 1.70 | 0.088 | 0.253 | 1,258 / 8,058 |
+| relevant only | news days | 1.66e-4 | 2.53e-4 | [-3.30e-4, 6.63e-4] | 0.66 | 0.512 | 0.253 | 1,035 / 2,035 |
+| rejected only | all days | 9.61e-5 | 1.21e-4 | [-1.42e-4, 3.34e-4] | 0.79 | 0.428 | 0.299 | 1,258 / 8,058 |
+| rejected only | news days | 3.74e-5 | 4.07e-4 | [-7.60e-4, 8.35e-4] | 0.09 | 0.927 | 0.299 | 1,163 / 2,406 |
+
+Rejected-only placebo tests (`irr_paired_*.csv`, `irr_newsonly_paired_*.csv`). Full universe:
+
+| days | test | gain | t | p |
+|---|---|---|---|---|
+| all days | H1_irr: + rejected-headline sentiment | 2.15e-5 | 1.50 | 0.134 |
+| all days | placebo_irr vs M1 | -1.32e-5 | -1.91 | 0.057 |
+| all days | real vs shuffled rejected sentiment | 3.47e-5 | 2.19 | 0.029 |
+| rejected-news days | H1_irr: + rejected-headline sentiment | 9.70e-5 | 2.01 | 0.045 |
+| rejected-news days | placebo_irr vs M1 | -5.62e-6 | -0.48 | 0.630 |
+| rejected-news days | real vs shuffled rejected sentiment | 1.03e-4 | 2.04 | 0.042 |
+
+**Interpretation (Full universe).** The evidence favours **spillover over low power**. On news days the
+whole gain sits in the rejected headlines: the effect is 9.7e-5 (95% CI 2.3e-6 to 1.9e-4, p = 0.045), and
+real rejected sentiment beats its shuffled placebo (p = 0.042). The relevant-only effect is essentially
+zero (-4.0e-6), not a similar-sized effect with a wider interval: its CI (-6.8e-5 to 6.0e-5) is about as
+wide as the all-headline CI (SE 3.3e-5 vs 3.1e-5) and sits just below the all-headline point estimate of
+6.4e-5. Caveats: the relevant and rejected CIs overlap, and their difference was not formally tested. Li-7
+is too small to say anything (all CIs are wide and include 0).
+
 ## Deviations from the plan, and caveats
 1. **Universe = point-in-time S&P 500 membership** (Phase 1c, fja05680/sp500 snapshots), not current
    constituents. 751 companies were members in 2010-22. Of the 310 no longer in the index, 107 were
@@ -514,7 +563,8 @@ in the 2018 training fit.
    exploratory for 2018-2022.
 9. The relevance-filter variant (M2_rel/M3_rel) was added after the 2018-2022 results and the annotation
    audit had been seen; it is a robustness check, not a replacement for the main specification.
-10. Hand check: `results/hand_check.csv` is handled in a separate session, and agreement / kappa are not
+10. The rejected-only diagnostic (M2_irr/M3_irr) was added after the relevance result had been seen.
+11. Hand check: `results/hand_check.csv` is handled in a separate session, and agreement / kappa are not
    reported here.
-11. 2023 results are not run. After "open 2023", rerun everything once with FINAL=1 and append a section
+12. 2023 results are not run. After "open 2023", rerun everything once with FINAL=1 and append a section
    here.

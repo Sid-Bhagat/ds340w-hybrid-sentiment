@@ -1,0 +1,12 @@
+\begin{tabular}{lllrrrrrrrrr}
+\toprule
+news used & days & model & mean\_daily\_logloss\_gain & nw\_se & ci95\_lo & ci95\_hi & nw\_t & p\_value & test\_days & stock\_days & news\_day\_share \\
+\midrule
+all headlines & all days & M2 & 0.0001 & 0.0001 & -0.0001 & 0.0003 & 1.0848 & 0.2780 & 1258 & 8058 & 0.3145 \\
+all headlines & news days & M2 & 0.0001 & 0.0003 & -0.0005 & 0.0007 & 0.3895 & 0.6969 & 1208 & 2534 & 0.3145 \\
+relevant only & all days & M2\_rel & 0.0001 & 0.0001 & -0.0000 & 0.0002 & 1.7049 & 0.0882 & 1258 & 8058 & 0.2525 \\
+relevant only & news days & M2\_rel & 0.0002 & 0.0003 & -0.0003 & 0.0007 & 0.6564 & 0.5116 & 1035 & 2035 & 0.2525 \\
+rejected only & all days & M2\_irr & 0.0001 & 0.0001 & -0.0001 & 0.0003 & 0.7920 & 0.4284 & 1258 & 8058 & 0.2986 \\
+rejected only & news days & M2\_irr & 0.0000 & 0.0004 & -0.0008 & 0.0008 & 0.0919 & 0.9267 & 1163 & 2406 & 0.2986 \\
+\bottomrule
+\end{tabular}

@@ -19,7 +19,10 @@ PAIRS = [("M1", "M2", "H1: + sentiment"), ("M2", "M3", "H2 (OOS): + interactions
          ("M0", "M1", "+ regime"), ("M3", "LGBM", "LGBM vs M3"), ("M3", "LSTM", "LSTM vs M3"),
          ("M3", "M4", "M4 vs M3: + 8-K"), ("LGBM", "LGBM_M4", "LGBM: + 8-K inputs"),
          ("M1", "M2_rel", "H1_rel: + relevant sentiment"), ("M2_rel", "M3_rel", "H2_rel (OOS): + interactions"),
-         ("M1", "PLACEBO_rel", "placebo_rel vs M1"), ("PLACEBO_rel", "M2_rel", "real vs shuffled relevant sentiment")]
+         ("M1", "PLACEBO_rel", "placebo_rel vs M1"), ("PLACEBO_rel", "M2_rel", "real vs shuffled relevant sentiment"),
+         ("M1", "M2_irr", "H1_irr: + rejected-headline sentiment"), ("M1", "PLACEBO_irr", "placebo_irr vs M1"),
+         ("PLACEBO_irr", "M2_irr", "real vs shuffled rejected sentiment")]
+IRR_TESTS = ["H1_irr: + rejected-headline sentiment", "placebo_irr vs M1", "real vs shuffled rejected sentiment"]
 REL_TESTS = ["H1_rel: + relevant sentiment", "H2_rel (OOS): + interactions", "placebo_rel vs M1",
              "real vs shuffled relevant sentiment"]
 TEX = RESULTS / "tables"
@@ -53,6 +56,10 @@ def load_preds():
     rel = PROC / "preds_rel.parquet"
     if rel.exists():
         p = p.merge(pd.read_parquet(rel)[["date", "ticker", "has_news_rel", "p_M2_rel", "p_M3_rel", "p_PLACEBO_rel"]],
+                    on=["date", "ticker"], how="left")
+    irr = PROC / "preds_irr.parquet"
+    if irr.exists():
+        p = p.merge(pd.read_parquet(irr)[["date", "ticker", "has_news_irr", "p_M2_irr", "p_M3_irr", "p_PLACEBO_irr"]],
                     on=["date", "ticker"], how="left")
     m4 = PROC / "preds_m4.parquet"
     if m4.exists():
@@ -180,6 +187,23 @@ def coverage_8k(li_only):
     return t.rename_axis("year").reset_index()
 
 
+def h1_variants(sub):
+    """H1 effect size (M2-variant vs M1 daily log-loss gain) for all / relevant-only / rejected-only news,
+    on all test days and on that variant's news days: mean, NW se, 95% CI, t, p, n."""
+    rows = []
+    for name, model, flag in [("all headlines", "M2", "has_news"), ("relevant only", "M2_rel", "has_news_rel"),
+                              ("rejected only", "M2_irr", "has_news_irr")]:
+        for days, q in [("all days", sub), ("news days", sub.loc[sub[flag] == 1])]:
+            diff = logloss_rows(q["y"], q["p_M1"]) - logloss_rows(q["y"], q["p_" + model])
+            daily = diff.groupby(q["date"]).mean()
+            m, t, pv = nw_mean(daily)
+            se = m / t
+            rows.append({"news used": name, "days": days, "model": model, "mean_daily_logloss_gain": m, "nw_se": se,
+                         "ci95_lo": m - 1.96 * se, "ci95_hi": m + 1.96 * se, "nw_t": t, "p_value": pv,
+                         "test_days": len(daily), "stock_days": len(q), "news_day_share": sub[flag].mean()})
+    return pd.DataFrame(rows)
+
+
 def main():
     p = load_preds()
     models = models_in(p)
@@ -204,6 +228,12 @@ def main():
             nd = paired_tests(sub.loc[sub["has_news_rel"] == 1], models)
             save(nd.loc[nd["test"].isin(REL_TESTS)], f"rel_newsonly_paired_{group}")
             save(metrics(sub.loc[sub["has_news_rel"] == 1], models), f"rel_newsonly_metrics_{group}")
+        if "M2_irr" in models:   # rejected-headlines diagnostic
+            it = paired_tests(sub, models)
+            save(it.loc[it["test"].isin(IRR_TESTS)], f"irr_paired_{group}")
+            nd = paired_tests(sub.loc[sub["has_news_irr"] == 1], models)
+            save(nd.loc[nd["test"].isin(IRR_TESTS)], f"irr_newsonly_paired_{group}")
+            save(h1_variants(sub), f"h1_variants_{group}")
         if "M4" in models:   # M4 extension: 8-K days only, and 8-K coverage
             k8 = paired_tests(sub.loc[sub["has_8k"] == 1], models)
             save(k8.loc[k8["model"].isin(["M4", "LGBM_M4"])], f"m4_8konly_paired_{group}")
