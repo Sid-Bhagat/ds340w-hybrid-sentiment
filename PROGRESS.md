@@ -38,26 +38,12 @@ Resume rule: check `ps -p 2091` and log tail before rerunning. HF resumes partia
 - data/processed: prices.parquet (current), prices_removed.parquet, membership.parquet, hist_members(_audit).csv, universe.csv; sp500_changes_raw.csv is junk. src/tickers.py = alias rules. data/ gitignored
 
 ## Verified checks log
-- 2026-11-07 05:53 torch.cuda.is_available() = True
-- 2026-11-07 05:53 HF metadata: Stock_news/All_external.csv = 5731397037 bytes (repo Zihan1004/FNSPID)
+- 2026-11-07 05:53-06:35 Phase 1 checks (cuda ok; both FNSPID files size+sha256 == HF; filter/finbert/hand_check counts) - see git history of this file (commit 8232f59)
 
-- 2026-11-07 06:01 download: 5731397037 bytes == HF size; sha256 == HF lfs sha256 (VERIFIED in log)
-- CSV cols: Date (UTC, e.g. '2020-06-05 06:30:54 UTC'), Article_title, Stock_symbol, Url, Publisher, ... Article etc. Convert UTC->America/New_York for timing rule.
-
-- 2026-11-07 06:03 news_filter on All_external: 13,057,514 rows read -> 635,577 kept (383 tickers, 2010-01-03..2020-06-11), sealed=0, no NaNs. File max date is 2020-06-11.
-
-- 2026-11-07 06:09 finbert pass1: 430,361 unique headlines scored in 2.3 min (batch 256, no OOM); news_scored 635,577 rows, 0 nulls, mean score 0.081
-
-- 2026-11-07 06:15 nasdaq_exteral_data.csv: 23232979597 bytes == HF size; sha256 == HF (VERIFIED in logs/download_nasdaq.log)
-
-- 2026-11-07 06:20 news_filter pass2: 28,606,813 rows read -> 1,156,590 kept (451 tickers); by year 2010 24k .. 2019 157k, 2020 118k, 2021 62k, 2022 109k; max trade_date 2022-12-30; none >=2023; 0 nulls
-
-- 2026-11-07 06:23 finbert pass2: 346,696 new hl scored in 1.8 min; news_scored.parquet 1,156,590 rows, 0 nulls, 16 cols (ticker ts_et trade_date headline score 11 ev_*)
 - 2026-11-07 12:55 filter pass3 (aliases): 1,202,648 rows, 462 tickers, 0 nulls, max trade 2022-12-30; finbert3 scored 19,561 new; news_scored 1,202,648 rows
 - 2026-11-07 13:05 membership: 751 cos, 441 current + 107 recovered removed priced; priced/day 344 (2010)..472 (2022). filter pass4 1,387,883 rows 553 tickers; finbert4 +106,718; news_scored 1,387,883 rows
 - 2026-11-07 13:07 panel.parquet 1,329,657 x 27, 2010-02-02..2022-12-29, 0 nulls, y mean .499; market.parquet 3252; regimes.parquet 13742 (5 folds); pytest 13 passed
 - 2026-11-07 13:11 preds.parquet 574,824 test rows (2018-22), coefs.csv 405 rows; pooled AUC full M2 .5096 / li7 M2 .5255
-- 2026-11-07 06:35 hand_check: 200 rows (67 neg/67 neu/66 pos); agreement fn tested on fake labels
 
 ## Open problems
 - Note: `python -I` breaks `import config` for our own scripts; use -I only for code reading untrusted data.
