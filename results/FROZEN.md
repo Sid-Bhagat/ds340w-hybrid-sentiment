@@ -65,12 +65,33 @@ separately and logged:
   pytest (with FINAL=1 the "2023 sealed" tests are expected to fail; all other tests must pass) ->
   models -> lstm -> evaluate -> figures.
 
+## Added before 2023 was opened, after seeing 2018-2022 results: SEC 8-K extension (M4)
+Requested by Sid on 2026-11-07 after the 2018-2022 results above had been seen. **Exploratory**: it is not
+part of the primary hypotheses H1-H3, and its 2018-2022 numbers are not independent of that look.
+- **M4** = M3 + 8-K features: has_8k, log(1+n_8k) (z-scored on the training fold, not clipped), and
+  dummies for items 2.02, 1.01, 2.01, 5.02, 7.01/8.01 and any_other_item (excluding 9.01). Logit with
+  date-clustered SEs, same folds, regimes, preprocessing and seeds (`src/models_m4.py`).
+- **LGBM_M4** = LightGBM on M4 inputs, same LGB_PARAMS and seed (secondary check).
+- 8-K data: `src/edgar.py`. CIK map = company_tickers.json + OVERRIDE (KG, GENZ) + PREDECESSORS
+  (20 tickers + GOOG), predecessor filings only before the successor's first 8-K. acceptanceDateTime is
+  UTC -> ET; after 16:00:00 ET or non-trading day -> next trading day. Raw JSON cache in data/raw/edgar/
+  (fetched 2026-11-07). **For 2023, do not refetch**: the cache already holds the filings, so rerun
+  `edgar.py build` only.
+- **Tests on 2023 (Full and Li-7):** (i) M4 vs M3 paired daily log loss, NW t (5 lags), two-sided, all test
+  days; (ii) the same on test stock-days with has_8k == 1; (iii) LGBM_M4 vs LGBM, all days and has_8k == 1;
+  (iv) daily and 5-day-rebalanced decile long-short for M4 and LGBM_M4, gross and net 10 bps/side, NW t,
+  Sharpe, turnover; (v) M4 8-K coefficients from the 2010-2022 training fit; (vi) accuracy/AUC/log loss and
+  8-K coverage for 2023.
+- Mechanical 2023 edit: `edgar.py` build uses `SEAL_DATE` -> replace with `config.end_date()`, like the
+  other files listed above. Pipeline order: after `finbert_score.py`, run `edgar.py build`; after
+  `models.py`, run `models_m4.py` (before `lstm.py`/`evaluate.py`).
+
 ## Comparability note
 The FINAL run re-downloads adjusted prices and adds 2022-12-30 as a test row for 2022 (it gains a
 target), so the rerun 2018-2022 numbers may differ slightly from the frozen ones in SUMMARY.md. The
 frozen pre-2023 numbers stay as reported. 2023 is reported as a new section and the differences are noted.
 
-## Code at freeze (sha256, first 16 hex chars)
+## Code at freeze (sha256, first 16 hex chars; updated with the M4 extension, 2026-11-07 ~14:30)
 | file | sha256 |
 |---|---|
 | `src/config.py` | `cc13fe7de36bcc78` |
@@ -85,7 +106,9 @@ frozen pre-2023 numbers stay as reported. 2023 is reported as a new section and 
 | `src/folds.py` | `7928e8248f163351` |
 | `src/models.py` | `226eadc99b9b72a2` |
 | `src/lstm.py` | `9722a1af7d105539` |
-| `src/evaluate.py` | `43cce358bfa1bd46` |
-| `src/figures.py` | `a56e44d1e1f68f7d` |
-| `tests/test_leakage.py` | `0ff1694308f42c30` |
+| `src/edgar.py` | `c13179639f50ec2c` |
+| `src/models_m4.py` | `9a9363b366c57448` |
+| `src/evaluate.py` | `dc5edb088563924c` |
+| `src/figures.py` | `f3137415e4282af1` |
+| `tests/test_leakage.py` | `fccff241049e0e27` |
 Git: the commit that adds this file ("Freeze ...").

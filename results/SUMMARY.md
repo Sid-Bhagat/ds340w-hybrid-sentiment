@@ -289,6 +289,113 @@ Each fold trained for 4-6 epochs with patience 3. The best validation epoch (1-i
 training loss keeps falling, so the LSTM is **likely undertrained or signal-starved** and its results are
 a lower bound for this architecture. It was not retuned (DECISIONS.md).
 
+## Extension: SEC 8-K event features (M4). Added before 2023 was opened, after seeing the 2018-2022 results
+Metadata only (form, acceptance time, item numbers), no filing text. `src/edgar.py`, `src/models_m4.py`.
+- **Data:** tickers -> CIK via SEC `company_tickers.json` (609/610 mapped). Two overrides: KG -> King
+  Pharmaceuticals (the KG ticker now belongs to Kestrel Group), and GENZ -> Genzyme (no current ticker).
+  A coverage check (member years with zero 8-Ks) flagged 22 tickers. Two were the overrides above; for
+  the other 20 the current CIK is a newer holding entity (GOOG shares Alphabet's CIK and gets the same fix). For each, a predecessor CIK was looked up by name in SEC `cik-lookup-data.txt` and verified to
+  file 8-Ks in the gap years: XOM, BLK, APA, DIS, GOOG/GOOGL (Google Inc), SKYD (Paramount Global), NAVI,
+  BKR, CI, DD, DINO, AVGO, DXC, ETN, FTI, ICE, MDT, PRGO, VTRS, XRX. Predecessor filings are used only
+  before the successor's first 8-K. After the fix, **no member ticker-year (200+ days) has zero 8-Ks**; the
+  only panel ticker with no 8-Ks is CCEP (a foreign filer that files 6-Ks). Forms 8-K and 8-K/A filed 2010+:
+  103,830 on pre-2023 trading days for 595 tickers; 30,677 rows with trading day >= 2023 (or after the
+  last 2022 trading day) are in the sealed file and never loaded.
+- **Timing:** `acceptanceDateTime` turned out to be **UTC, not Eastern**. Apple's 4:30pm ET earnings 8-Ks
+  show 20:30Z (EDT) and 21:30Z (EST). It is converted to America/New_York, then the news rule is applied:
+  after 16:00:00 ET or on a non-trading day -> next trading day. Accepted times cluster at 16-17h and
+  6-9h ET, as expected.
+- **Features** per stock-day: has_8k, log(1+n_8k), and dummies for item 2.02, 1.01, 2.01, 5.02, 7.01/8.01,
+  and any_other_item (any other item; 9.01 exhibits excluded because they come with most 8-Ks).
+  log_n_8k is z-scored on the training fold but **not clipped**: the 99th percentile is log 2, so the
+  1/99 clip used for other inputs would make it exactly log 2 x has_8k.
+
+### 8-K coverage per year (panel stock-days; `coverage_8k_full.csv`, `coverage_8k_li7.csv`)
+| year | Full 8-Ks | Full share stock-days w/ 8-K | Full share w/ item 2.02 | Full tickers w/ 8-K | Li-7 8-Ks | Li-7 share w/ 8-K | Li-7 tickers w/ 8-K |
+|---|---|---|---|---|---|---|---|
+| 2010 | 4791 | 0.0570 | 0.0170 | 347 | 39 | 0.0330 | 5 |
+| 2011 | 5499 | 0.0600 | 0.0170 | 354 | 53 | 0.0400 | 5 |
+| 2012 | 5619 | 0.0590 | 0.0180 | 365 | 54 | 0.0420 | 5 |
+| 2013 | 5526 | 0.0560 | 0.0170 | 378 | 60 | 0.0450 | 6 |
+| 2014 | 5728 | 0.0570 | 0.0170 | 386 | 67 | 0.0430 | 6 |
+| 2015 | 6228 | 0.0600 | 0.0170 | 400 | 63 | 0.0390 | 6 |
+| 2016 | 6337 | 0.0580 | 0.0170 | 422 | 63 | 0.0410 | 6 |
+| 2017 | 6374 | 0.0570 | 0.0170 | 440 | 64 | 0.0420 | 6 |
+| 2018 | 6346 | 0.0550 | 0.0170 | 450 | 44 | 0.0280 | 6 |
+| 2019 | 6364 | 0.0530 | 0.0170 | 462 | 55 | 0.0360 | 6 |
+| 2020 | 7140 | 0.0590 | 0.0170 | 470 | 70 | 0.0460 | 6 |
+| 2021 | 6512 | 0.0530 | 0.0170 | 477 | 72 | 0.0400 | 7 |
+| 2022 | 6258 | 0.0510 | 0.0170 | 481 | 74 | 0.0410 | 7 |
+
+### M4 results (M4 = M3 + 8-K features; logit, same folds/preprocessing/seeds; LGBM_M4 = LightGBM on M4 inputs)
+Pooled 2018-2022:
+
+| group | model | accuracy | auc | logloss |
+|---|---|---|---|---|
+| Full | M3 | 0.5051 | 0.5093 | 0.6930 |
+| Full | LGBM | 0.5028 | 0.5042 | 0.6944 |
+| Full | M4 | 0.5048 | 0.5091 | 0.6931 |
+| Full | LGBM_M4 | 0.5020 | 0.5037 | 0.6943 |
+| Li-7 | M3 | 0.5202 | 0.5260 | 0.6924 |
+| Li-7 | LGBM | 0.5163 | 0.5157 | 0.6936 |
+| Li-7 | M4 | 0.5185 | 0.5260 | 0.6924 |
+| Li-7 | LGBM_M4 | 0.5105 | 0.5126 | 0.6936 |
+
+Paired daily log loss vs M3 (and LGBM_M4 vs LGBM), Newey-West 5 lags; gain > 0 means the 8-K model is
+better:
+
+| group | subset | test | days | gain | nw_t | p |
+|---|---|---|---|---|---|---|
+| Full | all days | M4 vs M3: + 8-K | 1,258 | -7.06e-06 | -1.7400 | 0.0810 |
+| Full | all days | LGBM: + 8-K inputs | 1,258 | 3.32e-05 | 0.5600 | 0.5780 |
+| Full | has_8k == 1 | M4 vs M3: + 8-K | 1,257 | -0.000171 | -1.9500 | 0.0510 |
+| Full | has_8k == 1 | LGBM: + 8-K inputs | 1,257 | -8.16e-05 | -0.4400 | 0.6630 |
+| Li-7 | all days | M4 vs M3: + 8-K | 1,258 | 1.32e-05 | 0.5000 | 0.6180 |
+| Li-7 | all days | LGBM: + 8-K inputs | 1,258 | 9.51e-06 | 0.0400 | 0.9700 |
+| Li-7 | has_8k == 1 | M4 vs M3: + 8-K | 248 | -0.000382 | -0.6100 | 0.5400 |
+| Li-7 | has_8k == 1 | LGBM: + 8-K inputs | 248 | -0.00141 | -0.9500 | 0.3410 |
+
+Portfolios (decile long-short, 10 bps/side; daily and 5-day rebalanced):
+
+| group | rebalance | model | gross bps (t) | net bps (t) | net Sharpe | turnover |
+|---|---|---|---|---|---|---|
+| Full | daily | M3 | 5.31 (1.36) | -17.46 (-4.54) | -2.01 | 2.28 |
+| Full | daily | LGBM | 3.37 (0.91) | -28.70 (-7.78) | -3.65 | 3.21 |
+| Full | daily | M4 | 4.92 (1.25) | -18.33 (-4.72) | -2.10 | 2.32 |
+| Full | daily | LGBM_M4 | 2.98 (0.81) | -29.23 (-8.05) | -3.81 | 3.22 |
+| Full | 5-day | M3 | 9.81 (2.42) | 3.71 (0.92) | 0.43 | 0.61 |
+| Full | 5-day | LGBM | 2.27 (0.68) | -4.68 (-1.41) | -0.64 | 0.69 |
+| Full | 5-day | M4 | 9.12 (2.26) | 2.99 (0.74) | 0.35 | 0.61 |
+| Full | 5-day | LGBM_M4 | 3.06 (0.91) | -3.88 (-1.15) | -0.52 | 0.69 |
+| Li-7 | daily | M3 | 4.91 (0.71) | -14.62 (-2.16) | -0.93 | 1.95 |
+| Li-7 | daily | LGBM | 10.74 (1.52) | -19.48 (-2.77) | -1.24 | 3.02 |
+| Li-7 | daily | M4 | 8.55 (1.21) | -11.29 (-1.64) | -0.72 | 1.98 |
+| Li-7 | daily | LGBM_M4 | 0.72 (0.10) | -30.18 (-4.12) | -1.91 | 3.09 |
+| Li-7 | 5-day | M3 | 10.84 (1.53) | 5.35 (0.76) | 0.34 | 0.55 |
+| Li-7 | 5-day | LGBM | 11.14 (1.62) | 4.64 (0.67) | 0.31 | 0.65 |
+| Li-7 | 5-day | M4 | 11.64 (1.68) | 6.14 (0.89) | 0.40 | 0.55 |
+| Li-7 | 5-day | LGBM_M4 | -0.47 (-0.07) | -7.10 (-1.02) | -0.48 | 0.66 |
+
+8-K coefficients in M4 by fold (training fit, date-clustered SEs; `m4_8k_coefs.csv`):
+
+| term | 2018 | 2019 | 2020 | 2021 | 2022 |
+|---|---|---|---|---|---|
+| any_other_item | -0.0104 (p 0.71) | 0.0197 (p 0.46) | 0.0202 (p 0.43) | 0.0274 (p 0.25) | 0.0259 (p 0.26) |
+| has_8k | 0.0448 (p 0.53) | 0.0253 (p 0.71) | 0.0177 (p 0.78) | 0.0323 (p 0.60) | 0.0465 (p 0.43) |
+| i101 | 0.0220 (p 0.53) | 0.0104 (p 0.75) | 0.0279 (p 0.37) | 0.0093 (p 0.75) | 0.0059 (p 0.83) |
+| i201 | -0.0299 (p 0.72) | -0.0023 (p 0.98) | -0.0071 (p 0.92) | -0.0080 (p 0.91) | -0.0057 (p 0.93) |
+| i202 | -0.0065 (p 0.83) | 0.0026 (p 0.93) | -0.0019 (p 0.94) | -0.0060 (p 0.81) | -0.0052 (p 0.83) |
+| i502 | -0.0258 (p 0.39) | -0.0223 (p 0.43) | -0.0253 (p 0.34) | -0.0218 (p 0.39) | -0.0267 (p 0.27) |
+| i701_801 | -0.0169 (p 0.49) | -0.0040 (p 0.86) | 0.0011 (p 0.96) | 0.0065 (p 0.75) | 0.0027 (p 0.89) |
+| log_n_8k | -0.0129 (p 0.47) | -0.0104 (p 0.54) | -0.0076 (p 0.63) | -0.0115 (p 0.44) | -0.0129 (p 0.37) |
+
+**Result: the 8-K features add nothing.** No 8-K coefficient is significant in any fold. Out of sample,
+M4 is slightly *worse* than M3 on all days (Full t = -1.74, p = 0.081) and on 8-K days (t = -1.95,
+p = 0.051), so the extra inputs add estimation noise. LightGBM with 8-K inputs is no better than plain
+LightGBM. Portfolios do not improve on the Full universe. On Li-7 they are noisy (1 long / 1 short) and
+not significant. M0-M3, PLACEBO, LGBM and LSTM results are unchanged: they were not refit, and every
+pre-existing CSV value is identical.
+
 ## Deviations from the plan, and caveats
 1. **Universe = point-in-time S&P 500 membership** (Phase 1c, fja05680/sp500 snapshots), not current
    constituents. 751 companies were members in 2010-22. Of the 310 no longer in the index, 107 were
@@ -309,7 +416,9 @@ a lower bound for this architecture. It was not retuned (DECISIONS.md).
 6. H2 coefficient inference uses each fold's training fit. The out-of-sample H2 test is M3 vs M2 log loss.
 7. LSTM: 1,506 test rows (0.26%) lack 20 prior rows and get no prediction. Paired comparisons use common
    rows.
-8. Hand check: `results/hand_check.csv` is handled in a separate session, and agreement / kappa are not
+8. M4 (8-K features) was added after the 2018-2022 results had been seen (see FROZEN.md), so it is
+   exploratory for 2018-2022.
+9. Hand check: `results/hand_check.csv` is handled in a separate session, and agreement / kappa are not
    reported here.
-9. 2023 results are not run. After "open 2023", rerun everything once with FINAL=1 and append a section
+10. 2023 results are not run. After "open 2023", rerun everything once with FINAL=1 and append a section
    here.

@@ -40,6 +40,14 @@
 - **LSTM:** best validation epoch 1-3 in every fold, so it is likely undertrained (not retuned).
 - `results/FROZEN.md` lists exactly what will run on 2023.
 
+## Update (14:35): SEC 8-K extension (M4), before 2023
+- 103,830 8-Ks (2010-22) for 595 tickers, from EDGAR metadata. acceptanceDateTime is **UTC**, not ET
+  (verified on Apple earnings 8-Ks), so it was converted. 21 holding-company CIK changes were fixed with
+  verified predecessor CIKs.
+- **M4 adds nothing:** no significant 8-K coefficient; M4 vs M3 t = -1.74 (all days), -1.95 (8-K days).
+  LGBM_M4 is no better than LGBM. Old results are unchanged. FROZEN.md labels M4 as added after seeing
+  the 2018-22 results.
+
 ## Caveats for the paper (details in SUMMARY.md)
 - 2021 news is thin: 61,896 headlines, 24.5% of stock-days have news (vs about 53% in 2018-19).
 - Li-7 news is sparse in FNSPID: AMZN and META only in 2020, MSFT only in 2022, AAPL only in 2020 and 2022.

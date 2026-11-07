@@ -16,7 +16,8 @@ NW_LAGS = 5
 COST = 0.0010                       # 10 bps per side, charged on turnover
 PAIRS = [("M1", "M2", "H1: + sentiment"), ("M2", "M3", "H2 (OOS): + interactions"),
          ("M1", "PLACEBO", "placebo vs M1"), ("PLACEBO", "M2", "real vs shuffled sentiment"),
-         ("M0", "M1", "+ regime"), ("M3", "LGBM", "LGBM vs M3"), ("M3", "LSTM", "LSTM vs M3")]
+         ("M0", "M1", "+ regime"), ("M3", "LGBM", "LGBM vs M3"), ("M3", "LSTM", "LSTM vs M3"),
+         ("M3", "M4", "M4 vs M3: + 8-K"), ("LGBM", "LGBM_M4", "LGBM: + 8-K inputs")]
 TEX = RESULTS / "tables"
 
 
@@ -45,6 +46,10 @@ def load_preds():
     lstm = PROC / "preds_lstm.parquet"
     if lstm.exists():
         p = p.merge(pd.read_parquet(lstm)[["date", "ticker", "p_LSTM"]], on=["date", "ticker"], how="left")
+    m4 = PROC / "preds_m4.parquet"
+    if m4.exists():
+        p = p.merge(pd.read_parquet(m4)[["date", "ticker", "has_8k", "p_M4", "p_LGBM_M4"]], on=["date", "ticker"],
+                    how="left")
     return enforce_seal(p)
 
 
@@ -151,6 +156,22 @@ def coverage(li_only):
     return t.reset_index()
 
 
+def coverage_8k(li_only):
+    """Per year: 8-K filings on panel stock-days, share of stock-days with an 8-K, tickers with any 8-K."""
+    panel = enforce_seal(pd.read_parquet(PROC / "panel.parquet", columns=["date", "ticker"]))
+    e = enforce_seal(pd.read_parquet(PROC / "edgar_daily.parquet"))
+    e["date"] = e["date"].astype("datetime64[ns]")
+    p = panel.merge(e[["ticker", "date", "n_8k", "i202"]], on=["ticker", "date"], how="left").fillna({"n_8k": 0, "i202": 0})
+    if li_only:
+        p = p.loc[p["ticker"].isin(LI_STOCKS)]
+    g = p.groupby(p["date"].dt.year)
+    t = pd.DataFrame({"filings_8k": g["n_8k"].sum().astype(int), "stock_days": g.size(),
+                      "share_with_8k": g["n_8k"].apply(lambda s: (s > 0).mean()),
+                      "share_with_item_2_02": g["i202"].mean(),
+                      "tickers_with_8k": p.loc[p["n_8k"] > 0].groupby(p["date"].dt.year)["ticker"].nunique()})
+    return t.rename_axis("year").reset_index()
+
+
 def main():
     p = load_preds()
     models = models_in(p)
@@ -169,6 +190,11 @@ def main():
         save(news, f"robust_newsonly_paired_{group}")
         save(metrics(sub.loc[sub["has_news"] == 1], models), f"robust_newsonly_metrics_{group}")
         save(portfolio_table(sub, models, hold=5)[0], f"robust_portfolio_hold5_{group}")
+        if "M4" in models:   # M4 extension: 8-K days only, and 8-K coverage
+            k8 = paired_tests(sub.loc[sub["has_8k"] == 1], models)
+            save(k8.loc[k8["model"].isin(["M4", "LGBM_M4"])], f"m4_8konly_paired_{group}")
+            save(metrics(sub.loc[sub["has_8k"] == 1], models), f"m4_8konly_metrics_{group}")
+            save(coverage_8k(group == "li7"), f"coverage_8k_{group}")
         pooled = met.loc[met["fold"] == "pooled"].set_index("model")[["accuracy", "auc", "logloss"]]
         print(f"== {group}: pooled\n{pooled.round(4).to_string()}\n{pt.round(4).to_string()}\n"
               f"{port.loc[port['returns'] == 'net_10bps', ['model', 'mean_daily_bps', 'nw_t', 'ann_sharpe']].round(3).to_string()}",
@@ -178,6 +204,11 @@ def main():
     save(h3, "h3_regime_coef_M1_vs_M2")
     save(by_reg, "sentiment_coef_by_regime")
     save(sig, "coefs_M2_M3")
+    if (RESULTS / "coefs_m4.csv").exists():
+        c4 = pd.read_csv(RESULTS / "coefs_m4.csv")
+        save(c4.loc[c4["term"].isin(["has_8k", "log_n_8k", "i202", "i101", "i201", "i502", "i701_801",
+                                     "any_other_item", "sent", "sent_x_high", "p_high"]),
+                    ["fold", "term", "coef", "se", "z", "p"]], "m4_8k_coefs")
     print(h2.round(4).to_string(), "\n", h3.round(4).to_string(), flush=True)
     print("DONE", flush=True)
 

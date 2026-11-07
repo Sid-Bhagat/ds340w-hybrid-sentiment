@@ -12,7 +12,8 @@ from config import FIGS, PROC, RESULTS, enforce_seal  # noqa: E402
 
 # fixed categorical slots (validated default palette, light mode) - colour follows the model
 COLORS = {"M0": "#2a78d6", "M1": "#eb6834", "M2": "#1baf7a", "M3": "#eda100", "PLACEBO": "#e87ba4",
-          "LGBM": "#008300", "LSTM": "#6250d6"}
+          "LGBM": "#008300", "LSTM": "#6250d6", "M4": "#e34948"}
+# LGBM_M4 (secondary check) is in the tables only: an 8-slot palette never gets a generated 9th hue
 INK, MUTED, GRID = "#1a1a19", "#6b6a64", "#e4e3dd"
 plt.rcParams.update({"font.size": 8, "axes.edgecolor": MUTED, "axes.labelcolor": INK, "xtick.color": MUTED,
                      "ytick.color": MUTED, "axes.grid": True, "grid.color": GRID, "grid.linewidth": 0.6,
@@ -34,7 +35,7 @@ def cumulative_long_short():
         net = pd.read_csv(RESULTS / f"portfolio_daily_net_{group}.csv", index_col=0, parse_dates=True)
         for c, kind in enumerate(["gross", "net"]):
             ax = axes[r, c]
-            for m in net.columns:
+            for m in [c for c in net.columns if c in COLORS]:
                 s = net[m]
                 if kind == "gross":
                     s = gross_series(group, m)
@@ -66,7 +67,7 @@ def accuracy_by_fold():
         m = pd.read_csv(RESULTS / f"metrics_{group}.csv")
         m = m.loc[m["fold"] != "pooled"]
         m["fold"] = m["fold"].astype(int)
-        models = list(dict.fromkeys(m["model"]))
+        models = [x for x in dict.fromkeys(m["model"]) if x in COLORS]
         off = np.linspace(-0.3, 0.3, len(models))
         for o, mod in zip(off, models):
             d = m.loc[m["model"] == mod]
@@ -76,7 +77,7 @@ def accuracy_by_fold():
         ax.set_xticks(sorted(m["fold"].unique()))
         ax.set_ylabel("out-of-sample accuracy (%)")
         ax.set_title("Full universe" if group == "full" else "Li-7 subset", fontsize=8, color=INK, loc="left")
-    axes[0].legend(ncol=7, fontsize=6.5, loc="upper left", bbox_to_anchor=(0, 1.22))
+    axes[0].legend(ncol=8, fontsize=6.5, loc="upper left", bbox_to_anchor=(0, 1.22))
     save(fig, "accuracy_by_fold")
 
 

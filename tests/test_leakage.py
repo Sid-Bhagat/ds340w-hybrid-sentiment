@@ -131,3 +131,50 @@ def test_sealed_news_not_read_by_pipeline():
     for f in ["features.py", "regimes.py", "folds.py", "models.py", "evaluate.py", "lstm.py"]:
         if (src / f).exists():
             assert "news_sealed" not in (src / f).read_text(), f
+
+
+# 5. SEC 8-K timing (M4 extension)
+def test_8k_acceptance_is_utc_converted_to_et():
+    from edgar import parse_acceptance
+    s = pd.Series(["2022-10-27T20:30:22.000Z", "2022-01-27T21:30:36.000Z"])   # Apple earnings 8-Ks
+    t = parse_acceptance(s)
+    assert list(t.dt.strftime("%Y-%m-%d %H:%M:%S")) == ["2022-10-27 16:30:22", "2022-01-27 16:30:36"]
+
+
+def test_8k_timing_rule():
+    from edgar import to_trade_date
+    from news_filter import trading_days
+    cal = trading_days()
+    ts = pd.Series(pd.to_datetime(["2022-03-14 15:59:59", "2022-03-14 16:00:00", "2022-03-14 16:00:01",
+                                   "2022-03-18 17:30:00", "2022-03-19 10:00:00", "2022-07-04 09:00:00",
+                                   "2022-12-30 16:30:00"]))
+    got = to_trade_date(ts, cal)
+    want = pd.to_datetime(["2022-03-14", "2022-03-14", "2022-03-15", "2022-03-21", "2022-03-21",
+                           "2022-07-05", None])                     # after-close on last day -> beyond calendar
+    assert got.iloc[:6].tolist() == list(want[:6]) and pd.isna(got.iloc[6])
+
+
+def test_8k_files_respect_timing_and_seal():
+    k = pd.read_parquet(PROC / "edgar_8k.parquet", columns=["ts_et", "trade_date"])
+    assert k["trade_date"].max() < pd.Timestamp("2023-01-01")
+    day = k["ts_et"].dt.normalize()
+    assert (k["trade_date"] >= day).all()                                     # never earlier than filing
+    after = (k["ts_et"] - day) > pd.Timedelta(hours=16)
+    assert (k.loc[after, "trade_date"] > day[after]).all()                    # after close -> later day
+    s = pd.read_parquet(PROC / "edgar_8k_sealed_2023.parquet", columns=["trade_date"])
+    assert (s["trade_date"].isna() | (s["trade_date"] >= pd.Timestamp("2023-01-01"))).all()
+    d = pd.read_parquet(PROC / "edgar_daily.parquet", columns=["date"])
+    assert d["date"].max() < pd.Timestamp("2023-01-01")
+
+
+def test_8k_features_do_not_beat_their_lag(panel):
+    from models_m4 import add_8k
+    d = add_8k(panel.loc[panel["ticker"].isin(panel["ticker"].unique()[:200])])
+    for f, (c0, c1) in _corr_gaps(d, ["has_8k", "log_n_8k", "i202", "i502", "any_other_item"]).items():
+        assert c0 < 0.05 and c0 - c1 < 0.02, f
+
+
+def test_sealed_8k_not_read_by_models():
+    src = Path(config.ROOT) / "src"
+    for f in ["features.py", "models.py", "models_m4.py", "evaluate.py", "lstm.py", "figures.py"]:
+        assert "sealed" not in (src / f).read_text(), f

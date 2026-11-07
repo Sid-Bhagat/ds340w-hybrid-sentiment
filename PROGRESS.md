@@ -12,7 +12,8 @@ Phase 3 DONE 13:12 (models.py 2 min, evaluate.py -> results/*.csv + tables/*.tex
 Phase 3b LSTM DONE 13:13 (evaluate rerun incl. LSTM). Figures DONE 13:20.
 Phase 4 DONE 13:30. Session 3b DONE 13:50: Li-7 audit (no bug; raw files lack news), robustness
 (news-only H1, 5-day rebalance), LSTM check (likely undertrained), results/FROZEN.md written. STOPPED.
-Next: only on Sid's "open 2023" -> follow results/FROZEN.md exactly (mechanical seal edits first).
+Session 3c DONE 14:35: SEC 8-K extension (edgar.py, models_m4.py -> M4, LGBM_M4), tests 18/18,
+SUMMARY/FROZEN updated. STOPPED. Next: only on Sid's "open 2023" -> follow results/FROZEN.md exactly.
 
 ## Phase checklist
 - [x] Phase 0: universe + prices (data/processed/prices.parquet), committed dd03553
@@ -31,11 +32,13 @@ Next: only on Sid's "open 2023" -> follow results/FROZEN.md exactly (mechanical 
 | models (Phase 3) | `cd src; python models.py` (nohup) | see log | logs/models.log | 2026-11-07 13:10 | data/processed/preds.parquet + results/coefs.csv; log ends DONE |
 | LSTM (3b) | `cd src; python lstm.py` (nohup) | see log | logs/lstm.log | 2026-11-07 13:12 | data/processed/preds_lstm.parquet; log ends DONE; then rerun evaluate.py. Drop if not done 22:00 |
 | Li-7 audit | `cd src; python audit_li7.py` | fg | logs/audit_li7.log | 2026-11-07 13:22 | results/li7_coverage_audit.csv |
+| EDGAR fetch | `cd src; python edgar.py fetch` (nohup; cached, resumable) | see log | logs/edgar_fetch.log | 2026-11-07 13:47 | data/raw/edgar/CIK*.json; log ends FETCH DONE. Then `python edgar.py build`. STOP M4 work at 18:00 |
+| M4 models | `cd src; python models_m4.py` | fg | logs/models_m4.log | 2026-11-07 14:08 | data/processed/preds_m4.parquet, results/coefs_m4.csv |
 Resume rule: check `ps -p 2091` and log tail before rerunning. HF resumes partial downloads (.incomplete in data/raw/.cache).
 
 ## Key file map
 - CLAUDE.md (rules/spec), PLAN.md, DECISIONS.md, PROGRESS.md
-- src/config.py, prices.py, download_fnspid.py, news_filter.py, events.py, finbert_score.py, hand_check.py
+- src/edgar.py (8-K), models_m4.py (M4); src/config.py, prices.py, download_fnspid.py, news_filter.py, events.py, finbert_score.py, hand_check.py
 - data/processed: news_filtered/news_scored/news_sealed_2023.parquet, finbert_ckpt/ (all gitignored)
 - data/processed: prices.parquet (current), prices_removed.parquet, membership.parquet, hist_members(_audit).csv, universe.csv; sp500_changes_raw.csv is junk. src/tickers.py = alias rules. data/ gitignored
 

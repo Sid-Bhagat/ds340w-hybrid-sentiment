@@ -3,6 +3,7 @@
 ## Environment
 - WSL Ubuntu 24.04. Venv at .venv: activate it first and install packages with `uv pip install`.
 - Run long jobs with nohup and log to logs/.
+- Never combine `cd` with a file write in one shell command (it triggers a manual approval). Use absolute paths instead (e.g. `curl -o /home/sid/ds340w/data/raw/edgar/file.json ...`) or do the write in a Python script.
 - Hardware: 15 GB RAM in WSL, so read FNSPID in chunks and never load the full file. RTX 4070 Laptop with 8 GB VRAM, of which about 1 GB is used by Windows. i9-14900HX. FinBERT (ProsusAI/finbert) is already cached.
 - Library versions: pandas 3.x (copy-on-write, so never use chained assignment; use .loc), numpy 2.x, transformers 5.x, torch 2.6 cu124. Write code for these versions. If my older Li replication code breaks under pandas 3, fix it and don't downgrade.
 - First check torch.cuda.is_available(). If it's False, stop and tell me.
@@ -77,3 +78,8 @@ I have 36 hours until my DS 340W paper is due. Build and run my hybrid model pip
 - Write every output atomically: write to a .tmp file, then os.replace() to the final name, so a crash never leaves a half-written file.
 - After any download or large write, verify it: file size against the source, and the row count or that it opens. Log the check.
 - Commit code and small results after every step that works, not just at phase ends.
+
+## Revised clock times (override all earlier times)
+- Phase 2 resumed about 12:45pm Saturday after a 6-hour idle gap.
+- Phase 3b (LSTM): start only if Phase 3 is done by 7:00pm Saturday; drop it if it isn't finished by 10:00pm.
+- All pre-2023 results and MORNING_REPORT.md done by 11:00pm Saturday.
