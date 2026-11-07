@@ -30,13 +30,8 @@ unchanged (32 CSVs, diff 0). STOPPED. Next: only on Sid's "open 2023" -> follow 
 ## Background jobs
 | job | cmd | PID | log | started | expected output |
 |---|---|---|---|---|---|
-(all earlier jobs finished: downloads, filter passes 1-4, finbert 1-4, symbol scan, membership, models, LSTM)
-| models (Phase 3) | `cd src; python models.py` (nohup) | see log | logs/models.log | 2026-11-07 13:10 | data/processed/preds.parquet + results/coefs.csv; log ends DONE |
-| LSTM (3b) | `cd src; python lstm.py` (nohup) | see log | logs/lstm.log | 2026-11-07 13:12 | data/processed/preds_lstm.parquet; log ends DONE; then rerun evaluate.py. Drop if not done 22:00 |
-| Li-7 audit | `cd src; python audit_li7.py` | fg | logs/audit_li7.log | 2026-11-07 13:17 | results/li7_coverage_audit.csv |
-| EDGAR fetch | `cd src; python edgar.py fetch` (nohup; cached, resumable) | see log | logs/edgar_fetch.log | 2026-11-07 13:44 | data/raw/edgar/CIK*.json; log ends FETCH DONE. Then `python edgar.py build`. STOP M4 work at 18:00 |
-| M4 models | `cd src; python models_m4.py` | fg | logs/models_m4.log | 2026-11-07 13:50 | data/processed/preds_m4.parquet, results/coefs_m4.csv |
-| relevance | `python src/relevance.py` | fg | logs/relevance.log | 2026-11-07 14:03 | news_relevance.parquet, panel_rel.parquet, results/relevance_survival.csv. STOP by 17:00 |
+(all jobs finished: downloads, filter 1-4, finbert 1-4, symbol scan, membership, models, LSTM, Li-7 audit,
+ EDGAR fetch/build, models_m4, relevance, models_rel. Logs in logs/; none running.)
 Resume rule: check `ps -p 2091` and log tail before rerunning. HF resumes partial downloads (.incomplete in data/raw/.cache).
 
 ## Key file map
