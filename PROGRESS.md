@@ -10,8 +10,9 @@ Step 1 DONE 12:58. Step 2 (1c) DONE 13:06: membership.parquet mask, 107/310 remo
 Phase 2 DONE 13:08 (panel 1,329,657 rows, 545 tickers; 13/13 leakage tests pass).
 Phase 3 DONE 13:12 (models.py 2 min, evaluate.py -> results/*.csv + tables/*.tex).
 Phase 3b LSTM DONE 13:13 (evaluate rerun incl. LSTM). Figures DONE 13:20.
-Phase 4 DONE 13:30: results/SUMMARY.md + MORNING_REPORT.md. ALL pre-2023 work complete.
-Next: only on Sid's "open 2023" -> rerun with FINAL=1 once, append to SUMMARY.md. Hand check = other session.
+Phase 4 DONE 13:30. Session 3b DONE 13:50: Li-7 audit (no bug; raw files lack news), robustness
+(news-only H1, 5-day rebalance), LSTM check (likely undertrained), results/FROZEN.md written. STOPPED.
+Next: only on Sid's "open 2023" -> follow results/FROZEN.md exactly (mechanical seal edits first).
 
 ## Phase checklist
 - [x] Phase 0: universe + prices (data/processed/prices.parquet), committed dd03553
@@ -29,6 +30,7 @@ Next: only on Sid's "open 2023" -> rerun with FINAL=1 once, append to SUMMARY.md
 (all earlier jobs finished: downloads, filter passes 1-4, finbert 1-4, symbol scan, membership, models, LSTM)
 | models (Phase 3) | `cd src; python models.py` (nohup) | see log | logs/models.log | 2026-11-07 13:10 | data/processed/preds.parquet + results/coefs.csv; log ends DONE |
 | LSTM (3b) | `cd src; python lstm.py` (nohup) | see log | logs/lstm.log | 2026-11-07 13:12 | data/processed/preds_lstm.parquet; log ends DONE; then rerun evaluate.py. Drop if not done 22:00 |
+| Li-7 audit | `cd src; python audit_li7.py` | fg | logs/audit_li7.log | 2026-11-07 13:22 | results/li7_coverage_audit.csv |
 Resume rule: check `ps -p 2091` and log tail before rerunning. HF resumes partial downloads (.incomplete in data/raw/.cache).
 
 ## Key file map

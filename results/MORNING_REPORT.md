@@ -30,6 +30,16 @@
 - **Portfolios:** gross long-short +5 to +8 bps/day on Full (LSTM t = 2.18), but daily turnover is about 2,
   so **every strategy is negative after 10 bps costs** (about -14 to -29 bps/day).
 
+## Update (13:45): pre-2023 robustness, audit, freeze
+- **Li-7 audit:** no pipeline bug. The raw FNSPID files have 0 headlines for AAPL, AMZN, MSFT, GOOG/L,
+  TSLA and META/FB before 2018. The per-stage counts table is in SUMMARY.md.
+- **News-days-only H1 (Full):** M2 vs M1 t = 2.04 (p = 0.041); real vs shuffled t = 2.35 (p = 0.019).
+  Li-7: not significant.
+- **5-day rebalance:** turnover falls from about 2.1 to about 0.6. Full gross is about 10 bps/day
+  (t about 2.3); net is +3 to +5 bps/day (t about 1, not significant).
+- **LSTM:** best validation epoch 1-3 in every fold, so it is likely undertrained (not retuned).
+- `results/FROZEN.md` lists exactly what will run on 2023.
+
 ## Caveats for the paper (details in SUMMARY.md)
 - 2021 news is thin: 61,896 headlines, 24.5% of stock-days have news (vs about 53% in 2018-19).
 - Li-7 news is sparse in FNSPID: AMZN and META only in 2020, MSFT only in 2022, AAPL only in 2020 and 2022.

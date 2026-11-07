@@ -1,0 +1,201 @@
+id,llm_label,llm_note
+1,neutral,
+2,negative,insider selling
+3,positive,
+4,neutral,
+5,negative,
+6,neutral,
+7,neutral,
+8,positive,
+9,neutral,"about Teledyne, not BA"
+10,neutral,"about Abbott, not ILMN"
+11,neutral,
+12,positive,
+13,neutral,
+14,negative,
+15,neutral,"about Hess, not COP"
+16,positive,
+17,neutral,
+18,neutral,
+19,neutral,
+20,neutral,
+21,neutral,
+22,neutral,
+23,positive,
+24,neutral,
+25,neutral,"about Actelion, not ABT"
+26,neutral,
+27,positive,
+28,negative,missed FFO estimate
+29,negative,
+30,neutral,
+31,neutral,
+32,positive,beat estimates
+33,negative,
+34,neutral,
+35,neutral,
+36,positive,
+37,negative,
+38,positive,
+39,neutral,
+40,negative,lowered PT
+41,negative,
+42,neutral,mixed
+43,neutral,
+44,neutral,
+45,neutral,mixed
+46,neutral,
+47,positive,
+48,neutral,
+49,neutral,
+50,neutral,
+51,neutral,
+52,neutral,
+53,negative,fine
+54,neutral,
+55,positive,raised guidance
+56,positive,collaboration
+57,negative,lowered guidance
+58,neutral,
+59,neutral,
+60,negative,stock fell
+61,positive,
+62,neutral,preview question
+63,neutral,
+64,negative,stock fell
+65,positive,
+66,neutral,
+67,neutral,
+68,negative,downgrade
+69,positive,beat
+70,neutral,
+71,positive,beat
+72,positive,rally
+73,neutral,not about IP
+74,neutral,"about Facebook, not GOOGL"
+75,neutral,beat but margins down
+76,neutral,
+77,negative,
+78,positive,
+79,neutral,
+80,neutral,
+81,positive,
+82,negative,
+83,neutral,
+84,negative,
+85,neutral,
+86,negative,
+87,neutral,
+88,neutral,
+89,negative,
+90,neutral,mixed
+91,neutral,mixed
+92,neutral,
+93,positive,
+94,positive,
+95,positive,
+96,neutral,
+97,neutral,
+98,neutral,
+99,neutral,
+100,neutral,
+101,neutral,unclear
+102,positive,stock jumped
+103,negative,weak profit outlook
+104,positive,"EPS beat, sales down"
+105,neutral,
+106,negative,downgrade
+107,negative,first annual loss
+108,positive,dividend raise
+109,positive,strong-buy list
+110,neutral,sector data
+111,neutral,
+112,neutral,
+113,neutral,
+114,neutral,
+115,neutral,
+116,neutral,
+117,neutral,
+118,positive,upgrade
+119,negative,PT cut
+120,neutral,
+121,neutral,
+122,neutral,mixed
+123,negative,coronavirus fears
+124,negative,bearish pattern
+125,negative,stock fell
+126,negative,weak quarter
+127,neutral,
+128,neutral,
+129,positive,raised estimate
+130,neutral,
+131,positive,
+132,positive,positive FDA data
+133,neutral,
+134,positive,"buy, PT raised"
+135,neutral,
+136,negative,
+137,neutral,
+138,negative,
+139,neutral,
+140,neutral,
+141,neutral,
+142,neutral,
+143,neutral,
+144,neutral,
+145,neutral,
+146,neutral,
+147,negative,recall
+148,positive,FDA approval
+149,neutral,
+150,negative,
+151,negative,price-fixing case
+152,negative,
+153,negative,PT cut
+154,neutral,no terms
+155,neutral,
+156,neutral,previews
+157,neutral,transcript
+158,negative,rating suspended
+159,neutral,
+160,positive,raised guidance
+161,neutral,
+162,positive,"mixed: EPS beat, revenue miss"
+163,neutral,
+164,negative,
+165,negative,contracts canceled
+166,neutral,speculation
+167,neutral,
+168,neutral,
+169,positive,beat
+170,neutral,
+171,positive,
+172,neutral,
+173,negative,weak results
+174,neutral,
+175,neutral,
+176,negative,miss expected
+177,neutral,
+178,neutral,
+179,positive,higher revenues
+180,positive,
+181,neutral,
+182,negative,downgrade
+183,neutral,
+184,neutral,
+185,neutral,
+186,neutral,
+187,positive,stock jumped
+188,neutral,
+189,neutral,
+190,negative,equity offering
+191,positive,buyback raised
+192,negative,stock fell
+193,neutral,
+194,negative,miss expected
+195,neutral,
+196,positive,partnership
+197,neutral,
+198,positive,bullish earnings
+199,neutral,
+200,neutral,

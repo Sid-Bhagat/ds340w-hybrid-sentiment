@@ -1,0 +1,48 @@
+sym,stage,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019,2020,2021,2022,total
+AAPL,a/b raw All_external.csv,0,0,0,0,0,0,0,0,0,0,473,0,0,473
+AMZN,a/b raw All_external.csv,0,0,0,0,0,0,0,0,0,0,278,0,0,278
+FB,a/b raw All_external.csv,0,0,0,0,0,0,0,0,0,0,433,0,0,433
+GOOG,a/b raw All_external.csv,0,0,0,0,0,0,0,0,47,713,444,0,0,1204
+GOOGL,a/b raw All_external.csv,0,0,0,0,0,0,0,0,298,767,689,0,0,1754
+NVDA,a/b raw All_external.csv,0,226,183,144,118,180,337,615,526,508,309,0,0,3146
+TSLA,a/b raw All_external.csv,0,0,0,0,0,0,0,0,0,733,1142,0,0,1875
+AAPL,a/b raw nasdaq_exteral_data.csv,0,0,0,0,0,0,0,0,0,0,473,0,3094,3567
+AMZN,a/b raw nasdaq_exteral_data.csv,0,0,0,0,0,0,0,0,0,0,278,0,0,278
+FB,a/b raw nasdaq_exteral_data.csv,0,0,0,0,0,0,0,0,0,0,433,0,0,433
+GOOG,a/b raw nasdaq_exteral_data.csv,0,0,0,0,0,0,0,0,47,2141,2081,1472,1878,7619
+GOOGL,a/b raw nasdaq_exteral_data.csv,0,0,0,0,0,0,0,0,298,767,689,0,0,1754
+MSFT,a/b raw nasdaq_exteral_data.csv,0,0,0,0,0,0,0,0,0,0,0,0,2679,2679
+NVDA,a/b raw nasdaq_exteral_data.csv,0,226,183,144,118,180,337,615,526,508,309,711,2368,6225
+TSLA,a/b raw nasdaq_exteral_data.csv,0,0,0,0,0,0,0,0,0,733,1142,0,3169,5044
+AAPL,"c filtered, pre-dedupe (both files)",0,0,0,0,0,0,0,0,0,0,946,0,3067,4013
+AMZN,"c filtered, pre-dedupe (both files)",0,0,0,0,0,0,0,0,0,0,556,0,0,556
+FB,"c filtered, pre-dedupe (both files)",0,0,0,0,0,0,0,0,0,0,866,0,0,866
+GOOG,"c filtered, pre-dedupe (both files)",0,0,0,0,0,0,0,0,94,2845,2528,1472,1869,8808
+GOOGL,"c filtered, pre-dedupe (both files)",0,0,0,0,0,0,0,0,596,1528,1384,0,0,3508
+MSFT,"c filtered, pre-dedupe (both files)",0,0,0,0,0,0,0,0,0,0,0,0,2655,2655
+NVDA,"c filtered, pre-dedupe (both files)",0,452,366,288,236,360,666,1236,1050,1014,624,707,2360,9359
+TSLA,"c filtered, pre-dedupe (both files)",0,0,0,0,0,0,0,0,0,1460,2290,0,3146,6896
+AAPL,c2 after cross-file dedupe (raw symbol),0,0,0,0,0,0,0,0,0,0,472,0,2988,3460
+AMZN,c2 after cross-file dedupe (raw symbol),0,0,0,0,0,0,0,0,0,0,277,0,0,277
+FB,c2 after cross-file dedupe (raw symbol),0,0,0,0,0,0,0,0,0,0,432,0,0,432
+GOOG,c2 after cross-file dedupe (raw symbol),0,0,0,0,0,0,0,0,47,2086,2073,1472,1867,7545
+GOOGL,c2 after cross-file dedupe (raw symbol),0,0,0,0,0,0,0,0,298,764,689,0,0,1751
+MSFT,c2 after cross-file dedupe (raw symbol),0,0,0,0,0,0,0,0,0,0,0,0,2577,2577
+NVDA,c2 after cross-file dedupe (raw symbol),0,224,179,144,118,180,332,617,525,506,312,696,2321,6154
+TSLA,c2 after cross-file dedupe (raw symbol),0,0,0,0,0,0,0,0,0,730,1144,0,3018,4892
+AAPL,d news_filtered (aliased),0,0,0,0,0,0,0,0,0,0,472,0,2988,3460
+AMZN,d news_filtered (aliased),0,0,0,0,0,0,0,0,0,0,277,0,0,277
+GOOG,d news_filtered (aliased),0,0,0,0,0,0,0,0,300,2319,2378,1472,1867,8336
+GOOGL,d news_filtered (aliased),0,0,0,0,0,0,0,0,300,2319,2378,1472,1867,8336
+META,d news_filtered (aliased),0,0,0,0,0,0,0,0,0,0,432,0,0,432
+MSFT,d news_filtered (aliased),0,0,0,0,0,0,0,0,0,0,0,0,2577,2577
+NVDA,d news_filtered (aliased),0,224,179,144,118,180,332,617,525,506,312,696,2321,6154
+TSLA,d news_filtered (aliased),0,0,0,0,0,0,0,0,0,730,1144,0,3018,4892
+AAPL,e panel (member days),0,0,0,0,0,0,0,0,0,0,472,0,2968,3440
+AMZN,e panel (member days),0,0,0,0,0,0,0,0,0,0,277,0,0,277
+GOOG,e panel (member days),0,0,0,0,0,0,0,0,300,2319,2378,1472,1860,8329
+GOOGL,e panel (member days),0,0,0,0,0,0,0,0,300,2319,2378,1472,1860,8329
+META,e panel (member days),0,0,0,0,0,0,0,0,0,0,432,0,0,432
+MSFT,e panel (member days),0,0,0,0,0,0,0,0,0,0,0,0,2565,2565
+NVDA,e panel (member days),0,224,179,144,118,180,332,617,525,506,312,696,2318,6151
+TSLA,e panel (member days),0,0,0,0,0,0,0,0,0,0,0,0,3001,3001

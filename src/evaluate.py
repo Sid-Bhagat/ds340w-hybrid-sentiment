@@ -80,8 +80,10 @@ def paired_tests(p, models):
     return pd.DataFrame(rows)
 
 
-def portfolio(p, m, frac=0.10):
-    """Daily long top decile / short bottom decile of predicted prob (k = max(1, round(n*frac)))."""
+def portfolio(p, m, frac=0.10, hold=1):
+    """Long top decile / short bottom decile of predicted prob (k = max(1, round(n*frac))).
+    hold=1: rebalance daily. hold=5: set weights every 5th test day and hold them (no drift) in between;
+    a held stock with no return that day (e.g. left the index) contributes 0."""
     q = p.dropna(subset=["p_" + m])[["date", "ticker", "ret_next", "p_" + m]].copy()
     q["n"] = q.groupby("date")["ticker"].transform("size")
     q["k"] = np.maximum(1, np.round(q["n"] * frac)).astype(int)
@@ -89,18 +91,22 @@ def portfolio(p, m, frac=0.10):
     q["rk_lo"] = q.groupby("date")["p_" + m].rank(ascending=True, method="first")
     q = q.loc[q["n"] >= 2]
     q["w"] = np.where(q["rk_hi"] <= q["k"], 1.0 / q["k"], 0.0) - np.where(q["rk_lo"] <= q["k"], 1.0 / q["k"], 0.0)
-    gross = (q["w"] * q["ret_next"]).groupby(q["date"]).sum()
     W = q.pivot_table(index="date", columns="ticker", values="w", fill_value=0.0).sort_index()
+    if hold > 1:
+        reb = np.arange(len(W)) % hold == 0
+        W = W.where(pd.Series(reb, index=W.index), axis=0).ffill()
+    R = q.pivot_table(index="date", columns="ticker", values="ret_next").reindex_like(W).fillna(0.0)
+    gross = (W * R).sum(axis=1)
     turnover = W.diff().abs().sum(axis=1)
     turnover.iloc[0] = W.iloc[0].abs().sum()
     net = gross - COST * turnover.reindex(gross.index)
     return gross, net, turnover
 
 
-def portfolio_table(p, models):
+def portfolio_table(p, models, hold=1):
     rows, series = [], {}
     for m in models:
-        gross, net, to = portfolio(p, m)
+        gross, net, to = portfolio(p, m, hold=hold)
         series[m] = net
         for kind, s in [("gross", gross), ("net_10bps", net)]:
             mean, t, pv = nw_mean(s)
@@ -157,6 +163,12 @@ def main():
         save(port, f"portfolio_{group}")
         daily.to_csv(RESULTS / f"portfolio_daily_net_{group}.csv")
         save(coverage(group == "li7"), f"coverage_{group}")
+        # pre-specified robustness: (a) news stock-days only, (b) 5-day rebalanced portfolio
+        news = paired_tests(sub.loc[sub["has_news"] == 1], models)
+        news = news.loc[news["base"].isin(["M1", "PLACEBO"]) & news["model"].isin(["M2", "PLACEBO"])]
+        save(news, f"robust_newsonly_paired_{group}")
+        save(metrics(sub.loc[sub["has_news"] == 1], models), f"robust_newsonly_metrics_{group}")
+        save(portfolio_table(sub, models, hold=5)[0], f"robust_portfolio_hold5_{group}")
         pooled = met.loc[met["fold"] == "pooled"].set_index("model")[["accuracy", "auc", "logloss"]]
         print(f"== {group}: pooled\n{pooled.round(4).to_string()}\n{pt.round(4).to_string()}\n"
               f"{port.loc[port['returns'] == 'net_10bps', ['model', 'mean_daily_bps', 'nw_t', 'ann_sharpe']].round(3).to_string()}",

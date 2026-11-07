@@ -31,8 +31,9 @@ universe, **Li-7** = AMZN, AAPL, GOOGL, META, MSFT, NVDA, TSLA (the same fitted 
 | **2022** | 108,578 | 0.346 | 472 (484) | 12,712 | 0.561 | 7 |
 
 Test years are in bold. **2021 is thin**: it has half the headlines of 2019 and only 24.5% of
-stock-days have news. Li-7 coverage is very uneven. In raw FNSPID, AMZN has news only in 2020, META only
-in 2020 (filed as FB), MSFT only in 2022, AAPL only in 2020 and 2022, and TSLA in 2019, 2020 and 2022.
+stock-days have news. Li-7 coverage is very uneven, and the raw files lack the missing years (see the Li-7 coverage audit
+below). In raw FNSPID, AMZN has news only in 2020, META only in 2020 (filed as FB), MSFT only in 2022,
+AAPL only in 2020 and 2022, and TSLA in 2019, 2020 and 2022.
 NVDA and Alphabet are the only Li-7 names with steady coverage. The Li-7 index count is 5 in 2010-13,
 6 from 2014 and 7 from late 2020, because META joined the S&P 500 in Dec 2013 and TSLA in Dec 2020.
 
@@ -65,7 +66,9 @@ Gain = mean daily log loss of base minus model, so a positive gain means the mod
 | LightGBM vs M3 | -1.31e-3 | -4.47 | <0.001 | -1.19e-3 | -1.42 | 0.157 |
 | LSTM vs M3 | 5.2e-5 | 0.57 | 0.571 | -3.39e-4 | -1.07 | 0.284 |
 
-**H1 is not supported out of sample** (Full p = 0.21; Li-7 p = 0.28). Real sentiment beats the
+**H1 is not supported out of sample on all stock-days** (Full p = 0.21; Li-7 p = 0.28). **On news
+stock-days only (a pre-specified robustness check, below) it is significant for the Full universe**
+(t = 2.04, p = 0.041; real vs shuffled t = 2.35, p = 0.019). Real sentiment beats the
 shuffled-sentiment placebo only weakly (p = 0.077, Full). The regime adds a small but significant gain on
 the Full universe. LightGBM overfits (significantly worse than M3).
 
@@ -116,13 +119,175 @@ Mean daily spread in bps, NW t, annualised Sharpe. Net = 10 bps per side on dail
 
 Mean daily turnover is about 2.0-2.3 (3.0-3.2 for LightGBM), so each strategy pays roughly 20-30 bps a day
 in costs. Gross spreads are positive on the Full universe but significant only for the LSTM (t = 2.18).
-**No strategy survives 10 bps costs.** The Li-7 portfolio is 1 long / 1 short (a decile of about 7
+**No daily-rebalanced strategy survives 10 bps costs.** With 5-day rebalancing (robustness check
+below), net returns are +3 to +5 bps/day but not significant. The Li-7 portfolio is 1 long / 1 short (a decile of about 7
 stocks), so it is very noisy. Figure: `figures/cumulative_long_short.png`.
 
 ### Regimes
 2-state PCA-HMM, forward-filtered, refit each fold. Mean out-of-sample P(high-vol) by test year: 2018 0.45,
 2019 0.30, 2020 0.67, 2021 0.24, 2022 0.87. Both states are persistent (P(stay) 0.95-0.98).
 Figure: `figures/regime_timeline.png`.
+
+## Li-7 coverage audit (`results/li7_coverage_audit.csv`, `src/audit_li7.py`)
+Headlines per year at each stage, 2010-2022 (2023 is not counted). Stages (a) and (b) use the raw `Date`
+year and the raw `Stock_symbol`. Stages (c) to (e) use the assigned trading-day year. GOOG and GOOGL are
+identical from stage (d) on because company news goes to both share classes, and FB is relabelled to META
+at stage (d).
+
+| ticker | stage | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20 | 21 | 22 | total |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| AAPL | (a) raw All_external | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 473 | 0 | 0 | 473 |
+| AAPL | (b) raw nasdaq_exteral | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 473 | 0 | 3,094 | 3,567 |
+| AAPL | (c) filtered, pre-dedupe | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 946 | 0 | 3,067 | 4,013 |
+| AAPL | (c2) after cross-file dedupe | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 472 | 0 | 2,988 | 3,460 |
+| AAPL | (d) after alias rules | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 472 | 0 | 2,988 | 3,460 |
+| AAPL | (e) on panel stock-days | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 472 | 0 | 2,968 | 3,440 |
+| AMZN | (a) raw All_external | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 278 | 0 | 0 | 278 |
+| AMZN | (b) raw nasdaq_exteral | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 278 | 0 | 0 | 278 |
+| AMZN | (c) filtered, pre-dedupe | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 556 | 0 | 0 | 556 |
+| AMZN | (c2) after cross-file dedupe | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 277 | 0 | 0 | 277 |
+| AMZN | (d) after alias rules | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 277 | 0 | 0 | 277 |
+| AMZN | (e) on panel stock-days | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 277 | 0 | 0 | 277 |
+| MSFT | (b) raw nasdaq_exteral | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 2,679 | 2,679 |
+| MSFT | (c) filtered, pre-dedupe | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 2,655 | 2,655 |
+| MSFT | (c2) after cross-file dedupe | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 2,577 | 2,577 |
+| MSFT | (d) after alias rules | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 2,577 | 2,577 |
+| MSFT | (e) on panel stock-days | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 2,565 | 2,565 |
+| NVDA | (a) raw All_external | 0 | 226 | 183 | 144 | 118 | 180 | 337 | 615 | 526 | 508 | 309 | 0 | 0 | 3,146 |
+| NVDA | (b) raw nasdaq_exteral | 0 | 226 | 183 | 144 | 118 | 180 | 337 | 615 | 526 | 508 | 309 | 711 | 2,368 | 6,225 |
+| NVDA | (c) filtered, pre-dedupe | 0 | 452 | 366 | 288 | 236 | 360 | 666 | 1,236 | 1,050 | 1,014 | 624 | 707 | 2,360 | 9,359 |
+| NVDA | (c2) after cross-file dedupe | 0 | 224 | 179 | 144 | 118 | 180 | 332 | 617 | 525 | 506 | 312 | 696 | 2,321 | 6,154 |
+| NVDA | (d) after alias rules | 0 | 224 | 179 | 144 | 118 | 180 | 332 | 617 | 525 | 506 | 312 | 696 | 2,321 | 6,154 |
+| NVDA | (e) on panel stock-days | 0 | 224 | 179 | 144 | 118 | 180 | 332 | 617 | 525 | 506 | 312 | 696 | 2,318 | 6,151 |
+| GOOGL | (a) raw All_external | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 298 | 767 | 689 | 0 | 0 | 1,754 |
+| GOOGL | (b) raw nasdaq_exteral | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 298 | 767 | 689 | 0 | 0 | 1,754 |
+| GOOGL | (c) filtered, pre-dedupe | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 596 | 1,528 | 1,384 | 0 | 0 | 3,508 |
+| GOOGL | (c2) after cross-file dedupe | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 298 | 764 | 689 | 0 | 0 | 1,751 |
+| GOOGL | (d) after alias rules | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 300 | 2,319 | 2,378 | 1,472 | 1,867 | 8,336 |
+| GOOGL | (e) on panel stock-days | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 300 | 2,319 | 2,378 | 1,472 | 1,860 | 8,329 |
+| GOOG | (a) raw All_external | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 47 | 713 | 444 | 0 | 0 | 1,204 |
+| GOOG | (b) raw nasdaq_exteral | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 47 | 2,141 | 2,081 | 1,472 | 1,878 | 7,619 |
+| GOOG | (c) filtered, pre-dedupe | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 94 | 2,845 | 2,528 | 1,472 | 1,869 | 8,808 |
+| GOOG | (c2) after cross-file dedupe | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 47 | 2,086 | 2,073 | 1,472 | 1,867 | 7,545 |
+| GOOG | (d) after alias rules | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 300 | 2,319 | 2,378 | 1,472 | 1,867 | 8,336 |
+| GOOG | (e) on panel stock-days | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 300 | 2,319 | 2,378 | 1,472 | 1,860 | 8,329 |
+| TSLA | (a) raw All_external | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 733 | 1,142 | 0 | 0 | 1,875 |
+| TSLA | (b) raw nasdaq_exteral | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 733 | 1,142 | 0 | 3,169 | 5,044 |
+| TSLA | (c) filtered, pre-dedupe | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1,460 | 2,290 | 0 | 3,146 | 6,896 |
+| TSLA | (c2) after cross-file dedupe | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 730 | 1,144 | 0 | 3,018 | 4,892 |
+| TSLA | (d) after alias rules | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 730 | 1,144 | 0 | 3,018 | 4,892 |
+| TSLA | (e) on panel stock-days | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 3,001 | 3,001 |
+| META | (d) after alias rules | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 432 | 0 | 0 | 432 |
+| META | (e) on panel stock-days | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 432 | 0 | 0 | 432 |
+| FB | (a) raw All_external | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 433 | 0 | 0 | 433 |
+| FB | (b) raw nasdaq_exteral | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 433 | 0 | 0 | 433 |
+| FB | (c) filtered, pre-dedupe | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 866 | 0 | 0 | 866 |
+| FB | (c2) after cross-file dedupe | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 432 | 0 | 0 | 432 |
+
+**Finding: no pipeline bug. The raw FNSPID files lack these headlines.** Before 2018, both raw files have
+0 headlines for AAPL, AMZN, MSFT, GOOG/GOOGL, TSLA and META/FB; only NVDA has news. AAPL, AMZN and FB
+appear only in 2020, and AAPL and TSLA again in 2022. MSFT appears only in 2022, and only in the nasdaq
+file. Every symbol-format variant was checked (case, whitespace, other names), and all raw Date strings
+parse (`YYYY-MM-DD HH:MM:SS UTC`). The losses between stages are expected:
+- (c)->(c2): `nasdaq_exteral_data.csv` contains the `All_external.csv` rows verbatim through 2020-06, so
+  the cross-file dedupe halves 2010-2020 counts (e.g. AAPL 2020: 473 + 473 -> 472).
+- (b)->(c), about 1% in 2022: headlines whose trading day is 2022-12-30 or later go to the sealed file.
+- (d)->(e): TSLA has 0 on panel days in 2019-20 because it joined the S&P 500 on 2020-12-21 (the
+  point-in-time membership rule) and the 2020 headlines end in June. A few late-2022 rows are lost
+  because their trading day has no next-day target.
+
+## Pre-specified robustness checks (before 2023; same fitted models, no refit)
+### (a) News-only test stock-days (has_news == 1)
+Sentiment can only help on days with news, so these tests use only test stock-days with at least one
+headline. Gain = daily mean log loss of base minus model, Newey-West (5 lags).
+
+**Full universe: paired tests**
+
+| test | days | mean_daily_logloss_gain | nw_t | p_value |
+|---|---|---|---|---|
+| H1: + sentiment | 1258 | 6.4e-05 | 2.043 | 0.041 |
+| placebo vs M1 | 1258 | -1.28e-05 | -1.271 | 0.204 |
+| real vs shuffled sentiment | 1258 | 7.68e-05 | 2.351 | 0.019 |
+
+**Full universe: pooled metrics on news days**
+
+| model | n | accuracy | auc | logloss |
+|---|---|---|---|---|
+| M0 | 230,886 | 0.5010 | 0.5039 | 0.6932 |
+| M1 | 230,886 | 0.5035 | 0.5061 | 0.6931 |
+| M2 | 230,886 | 0.5036 | 0.5076 | 0.6931 |
+| M3 | 230,886 | 0.5036 | 0.5077 | 0.6931 |
+| PLACEBO | 230,886 | 0.5033 | 0.5059 | 0.6932 |
+| LGBM | 230,886 | 0.5028 | 0.5041 | 0.6945 |
+| LSTM | 230,379 | 0.5067 | 0.5106 | 0.6930 |
+
+**Li-7: paired tests**
+
+| test | days | mean_daily_logloss_gain | nw_t | p_value |
+|---|---|---|---|---|
+| H1: + sentiment | 1208 | 0.000123 | 0.390 | 0.697 |
+| placebo vs M1 | 1208 | 2.7e-05 | 0.218 | 0.828 |
+| real vs shuffled sentiment | 1208 | 9.64e-05 | 0.289 | 0.773 |
+
+**Li-7: pooled metrics on news days**
+
+| model | n | accuracy | auc | logloss |
+|---|---|---|---|---|
+| M0 | 2,534 | 0.5122 | 0.5214 | 0.6924 |
+| M1 | 2,534 | 0.5158 | 0.5214 | 0.6924 |
+| M2 | 2,534 | 0.5241 | 0.5334 | 0.6920 |
+| M3 | 2,534 | 0.5249 | 0.5323 | 0.6920 |
+| PLACEBO | 2,534 | 0.5170 | 0.5223 | 0.6924 |
+| LGBM | 2,534 | 0.5241 | 0.5160 | 0.6943 |
+| LSTM | 2,534 | 0.5146 | 0.5239 | 0.6923 |
+
+**Result:** on the Full universe, restricting to news days makes sentiment significant out of sample.
+M2 beats M1 with t = 2.04 (p = 0.041), and real sentiment beats shuffled sentiment with t = 2.35
+(p = 0.019); the shuffled placebo does not beat M1 (p = 0.20). On all days the same tests gave p = 0.21
+and 0.077: the gain is concentrated on news days and is diluted by the roughly 60% of test stock-days
+without news. Li-7 remains insignificant (p = 0.70; only 2,534 news stock-days). This is one of two
+robustness checks, so read p = 0.04 with that in mind.
+
+### (b) Lower-turnover portfolio: decile long-short rebalanced every 5 trading days
+Weights are set on every 5th test day and held without drift. A held stock with no return that day
+(e.g. it left the index) contributes 0. Costs are 10 bps per side on turnover.
+
+**Full universe**
+
+| model | gross bps (NW t, SR) | net 10 bps/side (NW t, SR) | daily turnover |
+|---|---|---|---|
+| M0 | 10.70 (2.37, 1.19) | 4.63 (1.03, 0.51) | 0.607 |
+| M1 | 10.32 (2.32, 1.14) | 4.29 (0.97, 0.48) | 0.603 |
+| M2 | 9.87 (2.32, 1.14) | 3.76 (0.88, 0.43) | 0.612 |
+| M3 | 9.81 (2.42, 1.14) | 3.71 (0.92, 0.43) | 0.610 |
+| PLACEBO | 9.10 (2.16, 1.04) | 2.97 (0.71, 0.34) | 0.613 |
+| LGBM | 2.27 (0.68, 0.31) | -4.68 (-1.41, -0.64) | 0.695 |
+| LSTM | 6.62 (1.82, 0.89) | 0.45 (0.12, 0.06) | 0.617 |
+
+**Li-7**
+
+| model | gross bps (NW t, SR) | net 10 bps/side (NW t, SR) | daily turnover |
+|---|---|---|---|
+| M0 | 2.62 (0.39, 0.16) | -3.20 (-0.48, -0.20) | 0.582 |
+| M1 | 1.17 (0.17, 0.07) | -4.35 (-0.65, -0.28) | 0.552 |
+| M2 | 10.90 (1.57, 0.69) | 5.43 (0.79, 0.35) | 0.547 |
+| M3 | 10.84 (1.53, 0.69) | 5.35 (0.76, 0.34) | 0.548 |
+| PLACEBO | 8.26 (1.10, 0.50) | 2.55 (0.34, 0.16) | 0.571 |
+| LGBM | 11.14 (1.62, 0.74) | 4.64 (0.67, 0.31) | 0.650 |
+| LSTM | -0.17 (-0.02, -0.01) | -5.90 (-0.86, -0.38) | 0.574 |
+
+**Result:** holding for 5 days cuts turnover from about 2.1 to about 0.6 per day. Full-universe gross
+spreads rise to about 9-11 bps/day and become significant (t = 2.2-2.4 for M0-M3 and the placebo; LGBM
+and LSTM are not significant). Net of costs they are +3 to +5 bps/day but **not significant** (t
+0.7-1.0, Sharpe 0.3-0.5). Sentiment models do not beat M0/M1 or the placebo here. On Li-7, M2/M3
+are +5.4 bps/day net (t 0.79), which is not significant.
+
+### LSTM training check
+Each fold trained for 4-6 epochs with patience 3. The best validation epoch (1-indexed) was 2018: 2,
+2019: 1, 2020: 1, 2021: 2, 2022: 3, with best validation loss 0.69308 / 0.69316 / 0.69309 / 0.69282 /
+0.69279, barely below log 2 = 0.69315. Validation loss is best after 1-3 epochs and then rises while
+training loss keeps falling, so the LSTM is **likely undertrained or signal-starved** and its results are
+a lower bound for this architecture. It was not retuned (DECISIONS.md).
 
 ## Deviations from the plan, and caveats
 1. **Universe = point-in-time S&P 500 membership** (Phase 1c, fja05680/sp500 snapshots), not current
