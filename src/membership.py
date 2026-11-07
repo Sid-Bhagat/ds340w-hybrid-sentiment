@@ -12,6 +12,7 @@ Outputs (atomic):
   data/processed/prices_removed.parquet  yfinance prices for recovered removed members
 """
 import os
+import time
 
 import pandas as pd
 import yfinance as yf
@@ -48,7 +49,8 @@ def snapshots():
 
 
 def daily_mask(snap, cal):
-    dates = pd.DataFrame({"date": cal})
+    dates = pd.DataFrame({"date": pd.DatetimeIndex(cal).astype("datetime64[ns]")})
+    snap = snap.assign(snap=snap["snap"].astype("datetime64[ns]"))
     sd = pd.DataFrame({"snap": sorted(snap["snap"].unique())})
     m = pd.merge_asof(dates, sd, left_on="date", right_on="snap")       # latest snapshot <= date
     return m.merge(snap, on="snap")[["date", "ticker"]]
@@ -69,7 +71,22 @@ def main():
     yf_sym = {t: t.replace(".", "-") for t in removed}
     data = yf.download(list(yf_sym.values()), start=START, end=SEAL_DATE, auto_adjust=True,
                        progress=False, threads=True, group_by="column")
-    close, vol = data["Close"], data["Volume"]
+    close, vol = data["Close"].copy(), data["Volume"].copy()
+    # the big threaded batch gets rate-limited: retry empty symbols in small unthreaded batches
+    empty = [y for y in yf_sym.values() if y not in close.columns or close[y].notna().sum() == 0]
+    print("empty after batch:", len(empty), "-> retrying", flush=True)
+    for i in range(0, len(empty), 10):
+        time.sleep(2)
+        d = yf.download(empty[i:i + 10], start=START, end=SEAL_DATE, auto_adjust=True,
+                        progress=False, threads=False, group_by="column")
+        if d is None or not len(d):
+            continue
+        for y in empty[i:i + 10]:
+            if y in d["Close"].columns and d["Close"][y].notna().any():
+                close = close.reindex(close.index.union(d.index))
+                vol = vol.reindex(vol.index.union(d.index))
+                close[y] = d["Close"][y].reindex(close.index)
+                vol[y] = d["Volume"][y].reindex(vol.index)
     audit, keep_px = [], []
     for t in removed:
         y = yf_sym[t]

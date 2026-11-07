@@ -21,7 +21,8 @@ RULES = [
     ("PKI", ALL, "RVTY"), ("RE", ALL, "EG"), ("MMC", ALL, "MRSH"), ("ACE", ALL, "CB"),
     ("CBG", ALL, "CBRE"), ("HCN", ALL, "WELL"), ("DLPH", ALL, "APTV"), ("COH", ALL, "TPR"),
     ("PCLN", ALL, "BKNG"), ("MHFI", ALL, "SPGI"), ("NU", ALL, "ES"), ("ZMH", ALL, "ZBH"),
-    ("WR", ALL, "EVRG"), ("Q", ALL, "IQV"),
+    ("WR", ALL, "EVRG"), ("Q", ALL, "IQV"), ("BK", ALL, "BNY"),
+    ("CBS", ALL, "SKYD"), ("VIAC", ALL, "SKYD"), ("PARA", ALL, "SKYD"),   # CBS->ViacomCBS->Paramount->Skydance
     ("IR", "2020-03-02", "TT"),                         # old Ingersoll-Rand plc became Trane (TT)
     ("NWSA", "2013-06-28", "FOXA"), ("NWS", "2013-06-28", "FOX"),   # pre-split News Corp = Fox
     # recycled symbols: before the date the symbol was a DIFFERENT company -> drop
@@ -31,10 +32,13 @@ RULES = [
     ("GEN", "2022-11-08", None),     # Genesis Healthcare
     ("ES", "2015-04-30", None),      # pre-Eversource
     ("CZR", "2020-07-21", None),     # old Caesars Entertainment (Eldorado took the symbol)
+    ("BNY", ALL, None),              # pre-2024 BNY = BlackRock NY muni fund
     # renames among companies later REMOVED from the index (used for historical membership)
     ("KORS", ALL, "CPRI"), ("COG", ALL, "CTRA"), ("CTL", ALL, "LUMN"), ("LB", ALL, "BBWI"),
-    ("DISCA", ALL, "WBD"), ("DISCK", ALL, "WBD"), ("CDAY", ALL, "DAY"), ("CBS", ALL, "PARA"),
-    ("VIAC", ALL, "PARA"), ("YHOO", ALL, "AABA"), ("ERI", ALL, "CZR"),
+    ("DISCA", ALL, "WBD"), ("DISCK", ALL, "WBD"), ("CDAY", ALL, "DAY"),
+    ("YHOO", ALL, "AABA"), ("ERI", ALL, "CZR"),
+    # removed members whose symbol changed AFTER removal (so yfinance has them under the new one)
+    ("GPS", ALL, "GAP"), ("FBHS", ALL, "FBIN"), ("HFC", ALL, "DINO"), ("ADS", ALL, "BFH"),
 ]
 
 # dual share classes of one company: company news is attached to both tickers
