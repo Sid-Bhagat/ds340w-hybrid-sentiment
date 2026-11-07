@@ -10,7 +10,8 @@ Step 1 DONE 12:58. Step 2 (1c) DONE 13:06: membership.parquet mask, 107/310 remo
 Phase 2 DONE 13:08 (panel 1,329,657 rows, 545 tickers; 13/13 leakage tests pass).
 Phase 3 DONE 13:12 (models.py 2 min, evaluate.py -> results/*.csv + tables/*.tex).
 Phase 3b LSTM DONE 13:13 (evaluate rerun incl. LSTM). Figures DONE 13:20.
-Now: Phase 4 results/SUMMARY.md + results/MORNING_REPORT.md.
+Phase 4 DONE 13:30: results/SUMMARY.md + MORNING_REPORT.md. ALL pre-2023 work complete.
+Next: only on Sid's "open 2023" -> rerun with FINAL=1 once, append to SUMMARY.md. Hand check = other session.
 
 ## Phase checklist
 - [x] Phase 0: universe + prices (data/processed/prices.parquet), committed dd03553
@@ -20,12 +21,12 @@ Now: Phase 4 results/SUMMARY.md + results/MORNING_REPORT.md.
   - [x] src/news_filter.py on All_external (06:03)  - [x] extended to both files (06:20)
   - [ ] src/events.py (empty stub), src/finbert_score.py
 - [x] 1b hand check (results/hand_check.csv, blind; key in hand_check_key.csv) | [x] 1c membership
-- [x] 2 panel + leakage tests | [x] 3 models | [x] 3b LSTM | [ ] 4 outputs (tables+figs done; SUMMARY/MORNING_REPORT next)
+- [x] 2 panel + leakage tests | [x] 3 models | [x] 3b LSTM | [x] 4 outputs
 
 ## Background jobs
 | job | cmd | PID | log | started | expected output |
 |---|---|---|---|---|---|
-(all earlier jobs finished: downloads, filter passes 1-4, finbert 1-4, symbol scan, membership)
+(all earlier jobs finished: downloads, filter passes 1-4, finbert 1-4, symbol scan, membership, models, LSTM)
 | models (Phase 3) | `cd src; python models.py` (nohup) | see log | logs/models.log | 2026-11-07 13:10 | data/processed/preds.parquet + results/coefs.csv; log ends DONE |
 | LSTM (3b) | `cd src; python lstm.py` (nohup) | see log | logs/lstm.log | 2026-11-07 13:12 | data/processed/preds_lstm.parquet; log ends DONE; then rerun evaluate.py. Drop if not done 22:00 |
 Resume rule: check `ps -p 2091` and log tail before rerunning. HF resumes partial downloads (.incomplete in data/raw/.cache).
