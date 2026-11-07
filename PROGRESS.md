@@ -1,6 +1,6 @@
 # PROGRESS (single source of truth; keep < 60 lines)
 
-Updated: 2026-11-07 12:52. Project root: /home/sid/ds340w (venv: .venv, `source .venv/bin/activate`).
+Updated: 2026-11-07 15:15. Project root: /home/sid/ds340w (venv: .venv, `source .venv/bin/activate`).
 
 ## Current phase / next step
 Session 3 (resumed 12:50 Sat). Sid's new plan: Step1 Li-7 + ticker aliases -> Step2 Phase 1c
