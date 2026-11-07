@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd
 
 from config import PROC, RAW, SEAL_DATE, START
+from tickers import RULES, canonical, expand_share_classes
 
 SRCS = [RAW / "Stock_news" / "All_external.csv", RAW / "Stock_news" / "nasdaq_exteral_data.csv"]
 OUT = PROC / "news_filtered.parquet"
@@ -47,10 +48,22 @@ def assign_trade_date(ts_utc_str, cal):
     return ts_naive, trade
 
 
-def main():
+def keep_set():
+    """Canonical tickers to keep -> output (yfinance) ticker. Current universe, plus removed
+    historical members if Phase 1c built data/processed/hist_members.csv."""
     uni = pd.read_csv(PROC / "universe.csv")
-    tickers = set(uni["ticker"]) | set(uni["yf_ticker"])
     to_yf = dict(zip(uni["ticker"], uni["yf_ticker"]))
+    hist = PROC / "hist_members.csv"
+    if hist.exists():
+        h = pd.read_csv(hist)
+        to_yf.update({t: y for t, y in zip(h["ticker"], h["yf_ticker"]) if t not in to_yf})
+    return to_yf
+
+
+def main():
+    to_yf = keep_set()
+    raw_ok = set(to_yf) | {r[0] for r in RULES}       # cheap prefilter before aliasing
+    print("keep tickers", len(to_yf), flush=True)
     cal = trading_days()
     print("calendar", cal.min().date(), cal.max().date(), len(cal), flush=True)
     keep, sealed = [], []
@@ -64,12 +77,13 @@ def main():
         for i, ch in enumerate(reader):
             n_read += len(ch)
             ch = ch.dropna(subset=["Date", "Article_title", "Stock_symbol"])
-            ch = ch.loc[ch["Stock_symbol"].isin(tickers)]
-            ch = ch.loc[ch["Date"] >= START]                # string compare is fine for ISO dates
+            ch = ch.loc[ch["Stock_symbol"].isin(raw_ok) & (ch["Date"] >= START)]   # ISO string compare
+            ch = ch.assign(Stock_symbol=canonical(ch["Stock_symbol"], ch["Date"].str.slice(0, 10)))
+            ch = ch.loc[ch["Stock_symbol"].isin(to_yf.keys())]
             n_tick += len(ch)
             if len(ch):
                 ts_et, trade = assign_trade_date(ch["Date"].str.replace(" UTC", "", regex=False), cal)
-                out = pd.DataFrame({"ticker": ch["Stock_symbol"].replace(to_yf), "ts_et": ts_et,
+                out = pd.DataFrame({"ticker": ch["Stock_symbol"].map(to_yf), "ts_et": ts_et,
                                     "trade_date": trade, "headline": ch["Article_title"].str.strip()})
                 out = out.dropna(subset=["ts_et"])
                 is_sealed = out["trade_date"].isna() | (out["trade_date"] >= pd.Timestamp(SEAL_DATE))
@@ -78,7 +92,7 @@ def main():
             if i % 20 == 0:
                 print(f"{src.name} chunk {i} read={n_read} kept_ticker_rows={n_tick}", flush=True)
     for name, parts, path in [("main", keep, OUT), ("sealed", sealed, SEALED)]:
-        df = pd.concat(parts, ignore_index=True)
+        df = expand_share_classes(pd.concat(parts, ignore_index=True))
         # same story can appear in both files / twice: keep the earliest timestamp per ticker+day+headline
         df = (df.sort_values("ts_et").drop_duplicates(subset=["ticker", "trade_date", "headline"])
                 .reset_index(drop=True))

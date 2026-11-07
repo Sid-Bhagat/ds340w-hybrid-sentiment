@@ -15,8 +15,8 @@ FINAL_END = "2024-01-01"          # exclusive end when FINAL=1
 TEST_YEARS = [2018, 2019, 2020, 2021, 2022]
 FINAL_TEST_YEAR = 2023
 
-# Placeholder: Li's 7 comparison stocks (not found in repo; see DECISIONS.md)
-LI_STOCKS = ["AAPL", "MSFT", "AMZN", "GOOGL", "JPM", "JNJ", "XOM"]
+# Li (2025) comparison group (reporting subset only; models use the full universe)
+LI_STOCKS = ["AMZN", "AAPL", "GOOGL", "META", "MSFT", "NVDA", "TSLA"]
 
 SEED = 340
 
