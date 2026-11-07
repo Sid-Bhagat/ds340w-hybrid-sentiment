@@ -30,7 +30,7 @@
 - **Portfolios:** gross long-short +5 to +8 bps/day on Full (LSTM t = 2.18), but daily turnover is about 2,
   so **every strategy is negative after 10 bps costs** (about -14 to -29 bps/day).
 
-## Update (13:45): pre-2023 robustness, audit, freeze
+## Update (13:23): pre-2023 robustness, audit, freeze
 - **Li-7 audit:** no pipeline bug. The raw FNSPID files have 0 headlines for AAPL, AMZN, MSFT, GOOG/L,
   TSLA and META/FB before 2018. The per-stage counts table is in SUMMARY.md.
 - **News-days-only H1 (Full):** M2 vs M1 t = 2.04 (p = 0.041); real vs shuffled t = 2.35 (p = 0.019).
@@ -40,13 +40,19 @@
 - **LSTM:** best validation epoch 1-3 in every fold, so it is likely undertrained (not retuned).
 - `results/FROZEN.md` lists exactly what will run on 2023.
 
-## Update (14:35): SEC 8-K extension (M4), before 2023
+## Update (13:59): SEC 8-K extension (M4), before 2023
 - 103,830 8-Ks (2010-22) for 595 tickers, from EDGAR metadata. acceptanceDateTime is **UTC**, not ET
   (verified on Apple earnings 8-Ks), so it was converted. 21 holding-company CIK changes were fixed with
   verified predecessor CIKs.
 - **M4 adds nothing:** no significant 8-K coefficient; M4 vs M3 t = -1.74 (all days), -1.95 (8-K days).
   LGBM_M4 is no better than LGBM. Old results are unchanged. FROZEN.md labels M4 as added after seeing
   the 2018-22 results.
+
+## Update (14:15): relevance-filtered news robustness (M2_rel/M3_rel), before 2023
+- Only 43.1% of headlines name their tagged company (symbol or name). On those alone, sentiment adds
+  nothing: H1_rel p = 0.80 (all days), 0.90 (news days), against the main spec's 0.21 / 0.041. The small
+  main-spec news-day gain comes mostly from headlines about other companies or the market. Main results
+  unchanged (diff 0). Added to FROZEN.md as a robustness variant.
 
 ## Caveats for the paper (details in SUMMARY.md)
 - 2021 news is thin: 61,896 headlines, 24.5% of stock-days have news (vs about 53% in 2018-19).

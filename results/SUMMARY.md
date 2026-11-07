@@ -396,6 +396,100 @@ LightGBM. Portfolios do not improve on the Full universe. On Li-7 they are noisy
 not significant. M0-M3, PLACEBO, LGBM and LSTM results are unchanged: they were not refit, and every
 pre-existing CSV value is identical.
 
+## Robustness: relevance-filtered news (M2_rel / M3_rel). Added before 2023 was opened, motivated by the annotation audit
+The blind LLM annotation (`results/hand_check_agreement.md`) found that 34 of the 94 FinBERT
+disagreements were headlines about a *different* company than the tagged ticker. This variant keeps a
+headline for its ticker only if it names the company or its symbol (`src/relevance.py`):
+- **Names** come from universe.csv plus SEC entity names for the ticker's CIK(s): current, former names
+  still in use in 2009+, and predecessor CIKs. Legal suffixes are removed (Inc/Corp/Co/Holdings/Ltd/plc/...)
+  and names match case-insensitively on word boundaries. Two shorter variants are added: the name without
+  a trailing descriptor ("Ford Motor" -> "Ford"), and a distinctive first word ("W W Grainger" ->
+  "Grainger"). A single-word variant is dropped if it is generic or shared by 2+ companies ("American",
+  "General", "Boston", "Marathon", ...). A small alias dict covers well-known short names (Alphabet/Google,
+  Facebook, J&J, P&G, 3M, ...; full list in the code and DECISIONS.md).
+- **Symbols** match whole-word and case-sensitively. Symbols of 1-2 letters only count as "$T", "(T)" or
+  ":T", because bare "A", "T" and "ON" are ordinary words.
+- Sentiment features are rebuilt from the relevant headlines with exactly the features.py steps.
+  **Self-check:** the same rebuild applied to all headlines reproduces panel.parquet's sentiment columns
+  with max difference 0. Then M2, M3 and the placebo are refit on the relevance-filtered features (same
+  folds, regimes, preprocessing, seeds).
+- **Main specification unchanged:** every value in the 32 pre-existing results CSVs is identical
+  (max abs change 0), checked the same way as for M4.
+
+### Share of headlines that survive (headlines on panel stock-days; `relevance_survival.csv`)
+| year | headlines (panel days) | relevant | share relevant | Li-7 headlines | Li-7 share relevant |
+|---|---|---|---|---|---|
+| 2010 | 22,544 | 10,675 | 0.474 | 0 | - |
+| 2011 | 42,072 | 20,425 | 0.485 | 224 | 0.554 |
+| 2012 | 55,721 | 28,808 | 0.517 | 179 | 0.587 |
+| 2013 | 55,828 | 23,701 | 0.425 | 144 | 0.507 |
+| 2014 | 64,955 | 27,514 | 0.424 | 118 | 0.610 |
+| 2015 | 92,285 | 39,293 | 0.426 | 180 | 0.561 |
+| 2016 | 110,897 | 46,321 | 0.418 | 332 | 0.545 |
+| 2017 | 116,932 | 47,671 | 0.408 | 617 | 0.536 |
+| 2018 | 148,026 | 62,923 | 0.425 | 825 | 0.560 |
+| 2019 | 158,876 | 70,972 | 0.447 | 2,825 | 0.383 |
+| 2020 | 120,488 | 48,843 | 0.405 | 3,871 | 0.369 |
+| 2021 | 61,896 | 27,167 | 0.439 | 2,168 | 0.236 |
+| 2022 | 108,578 | 45,108 | 0.415 | 12,712 | 0.286 |
+
+Overall **43.1%** of headlines (499,421 of 1,159,098) name their company. Stock-days with news
+fall from 37.1% to 21.2%. A spot check of rejected headlines shows mostly market wraps ("US STOCKS-Wall
+St..."), list articles ("10 Stocks That Could Rise 10x") and other companies ("Humana's (HUM) Medicare..."
+tagged HCA). Known misses: brand/person-only mentions (e.g. "Elon Musk" for TSLA), "Delta" alone for DAL
+(treated as generic), and "IPG" for IPGP.
+
+### Results (pooled 2018-2022)
+| group | model | accuracy | AUC | log loss |
+|---|---|---|---|---|
+| Full | M1 | 0.5056 | 0.5091 | 0.6931 |
+| Full | M2 | 0.5056 | 0.5096 | 0.6930 |
+| Full | M3 | 0.5051 | 0.5093 | 0.6930 |
+| Full | PLACEBO | 0.5055 | 0.5091 | 0.6931 |
+| Full | M2_rel | 0.5054 | 0.5092 | 0.6931 |
+| Full | M3_rel | 0.5051 | 0.5089 | 0.6931 |
+| Full | PLACEBO_rel | 0.5055 | 0.5090 | 0.6931 |
+| Li-7 | M1 | 0.5154 | 0.5218 | 0.6925 |
+| Li-7 | M2 | 0.5177 | 0.5255 | 0.6924 |
+| Li-7 | M3 | 0.5202 | 0.5260 | 0.6924 |
+| Li-7 | PLACEBO | 0.5179 | 0.5223 | 0.6925 |
+| Li-7 | M2_rel | 0.5171 | 0.5265 | 0.6924 |
+| Li-7 | M3_rel | 0.5181 | 0.5268 | 0.6924 |
+| Li-7 | PLACEBO_rel | 0.5168 | 0.5239 | 0.6924 |
+
+Paired daily log loss, Newey-West 5 lags (gain > 0: second model better):
+
+| group | days used | test | days | gain | NW t | p |
+|---|---|---|---|---|---|---|
+| Full | all days | H1_rel: + relevant sentiment | 1258 | -1.99e-06 | -0.26 | 0.797 |
+| Full | all days | H2_rel (OOS): + interactions | 1258 | -1.08e-05 | -1.65 | 0.099 |
+| Full | all days | placebo_rel vs M1 | 1258 | -9.36e-06 | -1.46 | 0.143 |
+| Full | all days | real vs shuffled relevant sentiment | 1258 | 7.38e-06 | 0.77 | 0.441 |
+| Full | relevant-news days | H1_rel: + relevant sentiment | 1258 | -3.95e-06 | -0.12 | 0.904 |
+| Full | relevant-news days | H2_rel (OOS): + interactions | 1258 | -1.08e-05 | -0.48 | 0.630 |
+| Full | relevant-news days | placebo_rel vs M1 | 1258 | -2.49e-05 | -2.25 | 0.024 |
+| Full | relevant-news days | real vs shuffled relevant sentiment | 1258 | 2.09e-05 | 0.62 | 0.535 |
+| Li-7 | all days | H1_rel: + relevant sentiment | 1258 | 0.000114 | 1.70 | 0.088 |
+| Li-7 | all days | H2_rel (OOS): + interactions | 1258 | 6.22e-06 | 0.26 | 0.798 |
+| Li-7 | all days | placebo_rel vs M1 | 1258 | 8.56e-05 | 2.00 | 0.045 |
+| Li-7 | all days | real vs shuffled relevant sentiment | 1258 | 2.89e-05 | 0.37 | 0.710 |
+| Li-7 | relevant-news days | H1_rel: + relevant sentiment | 1035 | 0.000166 | 0.66 | 0.512 |
+| Li-7 | relevant-news days | H2_rel (OOS): + interactions | 1035 | -0.000112 | -1.05 | 0.294 |
+| Li-7 | relevant-news days | placebo_rel vs M1 | 1035 | 0.000111 | 1.23 | 0.219 |
+| Li-7 | relevant-news days | real vs shuffled relevant sentiment | 1035 | 5.49e-05 | 0.20 | 0.840 |
+
+M3_rel interaction sent_x_high by training fold: 2018: 0.0285 (p 0.044); 2019: 0.0252 (p 0.070); 2020: 0.0208 (p 0.124); 2021: 0.0216 (p 0.177); 2022: 0.0159 (p 0.298).
+
+**Result: relevance filtering does not strengthen the sentiment effect; on the Full universe it removes
+it.** H1_rel: t = -0.26 (p = 0.80) on all days, and t = -0.12 (p = 0.90) on relevant-news days, compared
+with the main specification's t = 1.24 and t = 2.04 (p = 0.041). Real vs shuffled relevant sentiment is
+not significant (p = 0.44 / 0.54). So the small news-day gain in the main specification comes mostly from
+headlines that do *not* name the tagged company, likely sector, peer and market news that still carries
+information for the stock. Note, though, that the relevance filter also cuts the news sample by more than
+half. On Li-7, H1_rel is borderline (t = 1.70, p = 0.088), but the relevant-sentiment placebo also beats M1
+(t = 2.00, p = 0.045), so that gain is not specific to real sentiment. The interaction is significant only
+in the 2018 training fit.
+
 ## Deviations from the plan, and caveats
 1. **Universe = point-in-time S&P 500 membership** (Phase 1c, fja05680/sp500 snapshots), not current
    constituents. 751 companies were members in 2010-22. Of the 310 no longer in the index, 107 were
@@ -418,7 +512,9 @@ pre-existing CSV value is identical.
    rows.
 8. M4 (8-K features) was added after the 2018-2022 results had been seen (see FROZEN.md), so it is
    exploratory for 2018-2022.
-9. Hand check: `results/hand_check.csv` is handled in a separate session, and agreement / kappa are not
+9. The relevance-filter variant (M2_rel/M3_rel) was added after the 2018-2022 results and the annotation
+   audit had been seen; it is a robustness check, not a replacement for the main specification.
+10. Hand check: `results/hand_check.csv` is handled in a separate session, and agreement / kappa are not
    reported here.
-10. 2023 results are not run. After "open 2023", rerun everything once with FINAL=1 and append a section
+11. 2023 results are not run. After "open 2023", rerun everything once with FINAL=1 and append a section
    here.

@@ -10,10 +10,12 @@ Step 1 DONE 12:58. Step 2 (1c) DONE 13:06: membership.parquet mask, 107/310 remo
 Phase 2 DONE 13:08 (panel 1,329,657 rows, 545 tickers; 13/13 leakage tests pass).
 Phase 3 DONE 13:12 (models.py 2 min, evaluate.py -> results/*.csv + tables/*.tex).
 Phase 3b LSTM DONE 13:13 (evaluate rerun incl. LSTM). Figures DONE 13:20.
-Phase 4 DONE 13:30. Session 3b DONE 13:50: Li-7 audit (no bug; raw files lack news), robustness
+Phase 4 DONE 13:30. Session 3b DONE 13:23: Li-7 audit (no bug; raw files lack news), robustness
 (news-only H1, 5-day rebalance), LSTM check (likely undertrained), results/FROZEN.md written. STOPPED.
-Session 3c DONE 14:35: SEC 8-K extension (edgar.py, models_m4.py -> M4, LGBM_M4), tests 18/18,
-SUMMARY/FROZEN updated. STOPPED. Next: only on Sid's "open 2023" -> follow results/FROZEN.md exactly.
+Session 3c DONE 13:59: SEC 8-K extension (edgar.py, models_m4.py -> M4, LGBM_M4), tests 18/18,
+SUMMARY/FROZEN updated.
+Session 3d DONE 14:15: relevance-filter robustness (relevance.py, models_rel.py -> M2_rel/M3_rel); main spec
+unchanged (32 CSVs, diff 0). STOPPED. Next: only on Sid's "open 2023" -> follow results/FROZEN.md exactly.
 
 ## Phase checklist
 - [x] Phase 0: universe + prices (data/processed/prices.parquet), committed dd03553
@@ -31,14 +33,15 @@ SUMMARY/FROZEN updated. STOPPED. Next: only on Sid's "open 2023" -> follow resul
 (all earlier jobs finished: downloads, filter passes 1-4, finbert 1-4, symbol scan, membership, models, LSTM)
 | models (Phase 3) | `cd src; python models.py` (nohup) | see log | logs/models.log | 2026-11-07 13:10 | data/processed/preds.parquet + results/coefs.csv; log ends DONE |
 | LSTM (3b) | `cd src; python lstm.py` (nohup) | see log | logs/lstm.log | 2026-11-07 13:12 | data/processed/preds_lstm.parquet; log ends DONE; then rerun evaluate.py. Drop if not done 22:00 |
-| Li-7 audit | `cd src; python audit_li7.py` | fg | logs/audit_li7.log | 2026-11-07 13:22 | results/li7_coverage_audit.csv |
-| EDGAR fetch | `cd src; python edgar.py fetch` (nohup; cached, resumable) | see log | logs/edgar_fetch.log | 2026-11-07 13:47 | data/raw/edgar/CIK*.json; log ends FETCH DONE. Then `python edgar.py build`. STOP M4 work at 18:00 |
-| M4 models | `cd src; python models_m4.py` | fg | logs/models_m4.log | 2026-11-07 14:08 | data/processed/preds_m4.parquet, results/coefs_m4.csv |
+| Li-7 audit | `cd src; python audit_li7.py` | fg | logs/audit_li7.log | 2026-11-07 13:17 | results/li7_coverage_audit.csv |
+| EDGAR fetch | `cd src; python edgar.py fetch` (nohup; cached, resumable) | see log | logs/edgar_fetch.log | 2026-11-07 13:44 | data/raw/edgar/CIK*.json; log ends FETCH DONE. Then `python edgar.py build`. STOP M4 work at 18:00 |
+| M4 models | `cd src; python models_m4.py` | fg | logs/models_m4.log | 2026-11-07 13:50 | data/processed/preds_m4.parquet, results/coefs_m4.csv |
+| relevance | `python src/relevance.py` | fg | logs/relevance.log | 2026-11-07 14:03 | news_relevance.parquet, panel_rel.parquet, results/relevance_survival.csv. STOP by 17:00 |
 Resume rule: check `ps -p 2091` and log tail before rerunning. HF resumes partial downloads (.incomplete in data/raw/.cache).
 
 ## Key file map
 - CLAUDE.md (rules/spec), PLAN.md, DECISIONS.md, PROGRESS.md
-- src/edgar.py (8-K), models_m4.py (M4); src/config.py, prices.py, download_fnspid.py, news_filter.py, events.py, finbert_score.py, hand_check.py
+- src/edgar.py (8-K), models_m4.py (M4), relevance.py + models_rel.py (M2_rel/M3_rel); src/config.py, prices.py, download_fnspid.py, news_filter.py, events.py, finbert_score.py, hand_check.py
 - data/processed: news_filtered/news_scored/news_sealed_2023.parquet, finbert_ckpt/ (all gitignored)
 - data/processed: prices.parquet (current), prices_removed.parquet, membership.parquet, hist_members(_audit).csv, universe.csv; sp500_changes_raw.csv is junk. src/tickers.py = alias rules. data/ gitignored
 
@@ -49,6 +52,9 @@ Resume rule: check `ps -p 2091` and log tail before rerunning. HF resumes partia
 - 2026-11-07 13:05 membership: 751 cos, 441 current + 107 recovered removed priced; priced/day 344 (2010)..472 (2022). filter pass4 1,387,883 rows 553 tickers; finbert4 +106,718; news_scored 1,387,883 rows
 - 2026-11-07 13:07 panel.parquet 1,329,657 x 27, 2010-02-02..2022-12-29, 0 nulls, y mean .499; market.parquet 3252; regimes.parquet 13742 (5 folds); pytest 13 passed
 - 2026-11-07 13:11 preds.parquet 574,824 test rows (2018-22), coefs.csv 405 rows; pooled AUC full M2 .5096 / li7 M2 .5255
+- 13:20 li7_coverage_audit.csv (9 syms x 6 stages); robust_* CSVs; hold=1 portfolio == previous (4e-15)
+- 13:55 edgar: 1,386 JSON parse ok; 103,830 8-Ks/595 tickers pre-2023, 30,677 sealed; 0 member-yrs w/o 8-K; old CSVs diff 0
+- 14:08 relevance: self-check diff 0; 43.1% relevant; panel_rel 1,329,657 rows; preds_rel 574,824; 32 old CSVs diff 0
 
 ## Open problems
 - Note: `python -I` breaks `import config` for our own scripts; use -I only for code reading untrusted data.

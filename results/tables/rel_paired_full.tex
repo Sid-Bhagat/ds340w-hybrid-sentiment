@@ -1,0 +1,10 @@
+\begin{tabular}{lllrrrr}
+\toprule
+test & base & model & days & mean\_daily\_logloss\_gain & nw\_t & p\_value \\
+\midrule
+H1\_rel: + relevant sentiment & M1 & M2\_rel & 1258 & -0.0000 & -0.2573 & 0.7969 \\
+H2\_rel (OOS): + interactions & M2\_rel & M3\_rel & 1258 & -0.0000 & -1.6503 & 0.0989 \\
+placebo\_rel vs M1 & M1 & PLACEBO\_rel & 1258 & -0.0000 & -1.4630 & 0.1435 \\
+real vs shuffled relevant sentiment & PLACEBO\_rel & M2\_rel & 1258 & 0.0000 & 0.7706 & 0.4410 \\
+\bottomrule
+\end{tabular}

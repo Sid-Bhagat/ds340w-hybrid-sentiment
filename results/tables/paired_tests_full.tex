@@ -11,5 +11,9 @@ LGBM vs M3 & M3 & LGBM & 1258 & -0.0013 & -4.4681 & 0.0000 \\
 LSTM vs M3 & M3 & LSTM & 1258 & 0.0001 & 0.5669 & 0.5708 \\
 M4 vs M3: + 8-K & M3 & M4 & 1258 & -0.0000 & -1.7440 & 0.0812 \\
 LGBM: + 8-K inputs & LGBM & LGBM\_M4 & 1258 & 0.0000 & 0.5556 & 0.5785 \\
+H1\_rel: + relevant sentiment & M1 & M2\_rel & 1258 & -0.0000 & -0.2573 & 0.7969 \\
+H2\_rel (OOS): + interactions & M2\_rel & M3\_rel & 1258 & -0.0000 & -1.6503 & 0.0989 \\
+placebo\_rel vs M1 & M1 & PLACEBO\_rel & 1258 & -0.0000 & -1.4630 & 0.1435 \\
+real vs shuffled relevant sentiment & PLACEBO\_rel & M2\_rel & 1258 & 0.0000 & 0.7706 & 0.4410 \\
 \bottomrule
 \end{tabular}

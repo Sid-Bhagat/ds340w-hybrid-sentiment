@@ -1,6 +1,6 @@
 # FROZEN: what will be run on 2023 (written before 2023 was opened)
 
-Frozen 2026-11-07 ~13:50, before any 2023 row was loaded, scored, or evaluated. FINAL=1 has never been
+Frozen 2026-11-07 ~13:23, before any 2023 row was loaded, scored, or evaluated. FINAL=1 has never been
 set. The 2023 run happens **once**, only after Sid says "open 2023". Nothing below may be changed after
 looking at 2023 data. Any deviation must be logged in DECISIONS.md and flagged in SUMMARY.md.
 
@@ -86,12 +86,27 @@ part of the primary hypotheses H1-H3, and its 2018-2022 numbers are not independ
   other files listed above. Pipeline order: after `finbert_score.py`, run `edgar.py build`; after
   `models.py`, run `models_m4.py` (before `lstm.py`/`evaluate.py`).
 
+## Added before 2023 was opened, motivated by the annotation audit: relevance-filtered news (M2_rel/M3_rel)
+Requested by Sid on 2026-11-07 after the blind LLM annotation (34/94 disagreements = headline about a
+different company) and after the 2018-2022 results had been seen. **Robustness variant only.** The main
+specification (M0-M3, PLACEBO, LGBM, LSTM, M4) is unchanged and remains primary.
+- Relevance rule, name table, alias dict and symbol rule exactly as in `src/relevance.py` (logged in
+  DECISIONS.md). Sentiment features rebuilt with features.py's steps from relevant headlines only.
+- Models: M2_rel, M3_rel and PLACEBO_rel (`src/models_rel.py`), same folds, regimes, preprocessing,
+  logit and seeds as M2/M3/PLACEBO.
+- **Tests on 2023 (Full and Li-7):** H1_rel = M2_rel vs M1; H2_rel (OOS) = M3_rel vs M2_rel;
+  PLACEBO_rel vs M1; M2_rel vs PLACEBO_rel. Paired daily log loss, NW t (5 lags), two-sided, on all test
+  days and on test stock-days with has_news_rel == 1. Also accuracy/AUC/log loss and the 2023 relevance
+  survival share.
+- 2023 pipeline: after `finbert_score.py` and `features.py`, run `relevance.py` (its self-check must pass)
+  and then `models_rel.py` before `evaluate.py`. relevance.py has no date constants to change.
+
 ## Comparability note
 The FINAL run re-downloads adjusted prices and adds 2022-12-30 as a test row for 2022 (it gains a
 target), so the rerun 2018-2022 numbers may differ slightly from the frozen ones in SUMMARY.md. The
 frozen pre-2023 numbers stay as reported. 2023 is reported as a new section and the differences are noted.
 
-## Code at freeze (sha256, first 16 hex chars; updated with the M4 extension, 2026-11-07 ~14:30)
+## Code at freeze (sha256, first 16 hex chars; updated with the M4 extension and relevance variant, 2026-11-07 ~14:15)
 | file | sha256 |
 |---|---|
 | `src/config.py` | `cc13fe7de36bcc78` |
@@ -108,7 +123,9 @@ frozen pre-2023 numbers stay as reported. 2023 is reported as a new section and 
 | `src/lstm.py` | `9722a1af7d105539` |
 | `src/edgar.py` | `c13179639f50ec2c` |
 | `src/models_m4.py` | `9a9363b366c57448` |
-| `src/evaluate.py` | `dc5edb088563924c` |
+| `src/relevance.py` | `84f16b2dc7dbbabd` |
+| `src/models_rel.py` | `fcee2818c006d63b` |
+| `src/evaluate.py` | `fbe217656a101572` |
 | `src/figures.py` | `f3137415e4282af1` |
 | `tests/test_leakage.py` | `fccff241049e0e27` |
 Git: the commit that adds this file ("Freeze ...").

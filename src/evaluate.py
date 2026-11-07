@@ -17,7 +17,11 @@ COST = 0.0010                       # 10 bps per side, charged on turnover
 PAIRS = [("M1", "M2", "H1: + sentiment"), ("M2", "M3", "H2 (OOS): + interactions"),
          ("M1", "PLACEBO", "placebo vs M1"), ("PLACEBO", "M2", "real vs shuffled sentiment"),
          ("M0", "M1", "+ regime"), ("M3", "LGBM", "LGBM vs M3"), ("M3", "LSTM", "LSTM vs M3"),
-         ("M3", "M4", "M4 vs M3: + 8-K"), ("LGBM", "LGBM_M4", "LGBM: + 8-K inputs")]
+         ("M3", "M4", "M4 vs M3: + 8-K"), ("LGBM", "LGBM_M4", "LGBM: + 8-K inputs"),
+         ("M1", "M2_rel", "H1_rel: + relevant sentiment"), ("M2_rel", "M3_rel", "H2_rel (OOS): + interactions"),
+         ("M1", "PLACEBO_rel", "placebo_rel vs M1"), ("PLACEBO_rel", "M2_rel", "real vs shuffled relevant sentiment")]
+REL_TESTS = ["H1_rel: + relevant sentiment", "H2_rel (OOS): + interactions", "placebo_rel vs M1",
+             "real vs shuffled relevant sentiment"]
 TEX = RESULTS / "tables"
 
 
@@ -46,6 +50,10 @@ def load_preds():
     lstm = PROC / "preds_lstm.parquet"
     if lstm.exists():
         p = p.merge(pd.read_parquet(lstm)[["date", "ticker", "p_LSTM"]], on=["date", "ticker"], how="left")
+    rel = PROC / "preds_rel.parquet"
+    if rel.exists():
+        p = p.merge(pd.read_parquet(rel)[["date", "ticker", "has_news_rel", "p_M2_rel", "p_M3_rel", "p_PLACEBO_rel"]],
+                    on=["date", "ticker"], how="left")
     m4 = PROC / "preds_m4.parquet"
     if m4.exists():
         p = p.merge(pd.read_parquet(m4)[["date", "ticker", "has_8k", "p_M4", "p_LGBM_M4"]], on=["date", "ticker"],
@@ -190,6 +198,12 @@ def main():
         save(news, f"robust_newsonly_paired_{group}")
         save(metrics(sub.loc[sub["has_news"] == 1], models), f"robust_newsonly_metrics_{group}")
         save(portfolio_table(sub, models, hold=5)[0], f"robust_portfolio_hold5_{group}")
+        if "M2_rel" in models:   # relevance-filter robustness variant
+            relt = paired_tests(sub, models)
+            save(relt.loc[relt["test"].isin(REL_TESTS)], f"rel_paired_{group}")
+            nd = paired_tests(sub.loc[sub["has_news_rel"] == 1], models)
+            save(nd.loc[nd["test"].isin(REL_TESTS)], f"rel_newsonly_paired_{group}")
+            save(metrics(sub.loc[sub["has_news_rel"] == 1], models), f"rel_newsonly_metrics_{group}")
         if "M4" in models:   # M4 extension: 8-K days only, and 8-K coverage
             k8 = paired_tests(sub.loc[sub["has_8k"] == 1], models)
             save(k8.loc[k8["model"].isin(["M4", "LGBM_M4"])], f"m4_8konly_paired_{group}")
