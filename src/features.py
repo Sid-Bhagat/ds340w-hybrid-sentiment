@@ -9,7 +9,7 @@ import os
 import numpy as np
 import pandas as pd
 
-from config import PROC, SEAL_DATE, enforce_seal
+from config import PROC, end_date, enforce_seal
 
 PRICE_FEATS = ["ret1", "ret5", "ret20", "vol20", "volz"]
 EVENTS = ["ev_earnings_beat", "ev_earnings_miss", "ev_guidance", "ev_buyback", "ev_dividend",
@@ -101,7 +101,7 @@ def main():
     panel["excess_next"] = panel["ret_next"] - panel["mkt_ret_next"]     # portfolio P&L only
     panel = panel.dropna(subset=PRICE_FEATS + ["ret_next", "mkt_ret_next", "next_date"])
     panel = panel.loc[panel["date"].isin(market["date"])]
-    assert panel["date"].max() < pd.Timestamp(SEAL_DATE) and panel["next_date"].max() < pd.Timestamp(SEAL_DATE)
+    assert panel["date"].max() < pd.Timestamp(end_date()) and panel["next_date"].max() < pd.Timestamp(end_date())
     panel = panel[["date", "next_date", "ticker"] + PRICE_FEATS + SENT_FEATS +
                   ["y", "ret_next", "mkt_ret_next", "excess_next"]].sort_values(["date", "ticker"])
     panel = panel.reset_index(drop=True)

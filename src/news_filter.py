@@ -8,7 +8,7 @@ import os
 import numpy as np
 import pandas as pd
 
-from config import PROC, RAW, SEAL_DATE, START
+from config import PROC, RAW, START, end_date
 from tickers import RULES, canonical, expand_share_classes
 
 SRCS = [RAW / "Stock_news" / "All_external.csv", RAW / "Stock_news" / "nasdaq_exteral_data.csv"]
@@ -86,7 +86,7 @@ def main():
                 out = pd.DataFrame({"ticker": ch["Stock_symbol"].map(to_yf), "ts_et": ts_et,
                                     "trade_date": trade, "headline": ch["Article_title"].str.strip()})
                 out = out.dropna(subset=["ts_et"])
-                is_sealed = out["trade_date"].isna() | (out["trade_date"] >= pd.Timestamp(SEAL_DATE))
+                is_sealed = out["trade_date"].isna() | (out["trade_date"] >= pd.Timestamp(end_date()))
                 keep.append(out.loc[~is_sealed])
                 sealed.append(out.loc[is_sealed])
             if i % 20 == 0:

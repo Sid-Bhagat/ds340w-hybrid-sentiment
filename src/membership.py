@@ -17,7 +17,7 @@ import time
 import pandas as pd
 import yfinance as yf
 
-from config import PROC, RAW, SEAL_DATE, START
+from config import PROC, RAW, START, end_date
 from news_filter import trading_days
 from tickers import RULES
 
@@ -41,7 +41,7 @@ def alias_membership(sym, date):
 def snapshots():
     h = pd.read_csv(SRC)
     h["date"] = pd.to_datetime(h["date"])
-    h = h.loc[h["date"] < pd.Timestamp(SEAL_DATE)].sort_values("date")
+    h = h.loc[h["date"] < pd.Timestamp(end_date())].sort_values("date")
     first = h.loc[h["date"] <= pd.Timestamp(START)].tail(1)          # snapshot in force on day 1
     h = pd.concat([first, h.loc[h["date"] > pd.Timestamp(START)]])
     rows = [(d, alias_membership(s, d)) for d, t in zip(h["date"], h["tickers"]) for s in t.split(",")]
@@ -69,7 +69,7 @@ def main():
 
     days_in = mask.groupby("ticker")["date"].agg(["min", "max", "count"])
     yf_sym = {t: t.replace(".", "-") for t in removed}
-    data = yf.download(list(yf_sym.values()), start=START, end=SEAL_DATE, auto_adjust=True,
+    data = yf.download(list(yf_sym.values()), start=START, end=end_date(), auto_adjust=True,
                        progress=False, threads=True, group_by="column")
     close, vol = data["Close"].copy(), data["Volume"].copy()
     # the big threaded batch gets rate-limited: retry empty symbols in small unthreaded batches
@@ -77,7 +77,7 @@ def main():
     print("empty after batch:", len(empty), "-> retrying", flush=True)
     for i in range(0, len(empty), 10):
         time.sleep(2)
-        d = yf.download(empty[i:i + 10], start=START, end=SEAL_DATE, auto_adjust=True,
+        d = yf.download(empty[i:i + 10], start=START, end=end_date(), auto_adjust=True,
                         progress=False, threads=False, group_by="column")
         if d is None or not len(d):
             continue
@@ -104,7 +104,7 @@ def main():
     audit = pd.DataFrame(audit)
     rec = audit.loc[audit["recovered"]]
     px = pd.concat(keep_px, ignore_index=True)
-    assert px["date"].max() < pd.Timestamp(SEAL_DATE)
+    assert px["date"].max() < pd.Timestamp(end_date())
     # mask in yfinance symbols; drop removed members we could not price
     mask["ticker"] = mask["ticker"].map(lambda t: to_yf.get(t, t.replace(".", "-")))
     priced = set(uni["yf_ticker"]) | set(rec["yf_ticker"])

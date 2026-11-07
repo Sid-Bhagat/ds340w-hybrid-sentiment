@@ -113,27 +113,43 @@ specification stays primary. This is the last addition before 2023.
   n), reported for 2023 alone.
 - 2023 pipeline: after `relevance.py` and `models_rel.py`, run `models_irr.py`, then `evaluate.py`.
 
+## Infrastructure fixes and reproducibility gate (2026-11-07 14:46-15:00, before 2023 was opened)
+- **Fixes (infrastructure only, no modelling change):** `news_filter.py`, `membership.py`, `features.py`,
+  `edgar.py` read the seal date via `config.end_date()` instead of `SEAL_DATE`. `prices.py` downloads
+  prices for the saved `universe.csv` and no longer re-scrapes Wikipedia. With FINAL unset,
+  end_date() == SEAL_DATE, so pre-2023 behaviour is unchanged.
+- **Gate (FINAL unset):** reran features -> regimes -> models -> lstm -> models_m4 -> relevance ->
+  models_rel -> models_irr -> evaluate and compared all 45 committed results CSVs with git HEAD.
+  - Every non-LSTM output reproduced within 1e-9: the panels are identical, the logit, placebo, M4,
+    _rel and _irr predictions agree to <= 2.6e-13, and LightGBM is identical.
+  - The LSTM is not bit-deterministic on the GPU (cuDNN): its probabilities differ by up to 9.2e-7, so 12
+    CSVs differ only in their LSTM rows.
+  - **Amended tolerance (Sid, option 1): LSTM probabilities 1e-5, everything else 1e-9 -> gate PASSED.**
+    The 2023 LSTM numbers carry this run-to-run noise (about 1e-6 in probabilities and log-loss tests;
+    about 0.004 bps in portfolio spreads).
+- Hashes below are after these fixes.
+
 ## Comparability note
 The FINAL run re-downloads adjusted prices and adds 2022-12-30 as a test row for 2022 (it gains a
 target), so the rerun 2018-2022 numbers may differ slightly from the frozen ones in SUMMARY.md. The
 frozen pre-2023 numbers stay as reported. 2023 is reported as a new section and the differences are noted.
 
-## Code at freeze (sha256, first 16 hex chars; updated with M4, the relevance variant and the rejected-headlines diagnostic, 2026-11-07 ~14:45)
+## Code at freeze (sha256, first 16 hex chars; after the infrastructure fixes, 2026-11-07 ~15:00)
 | file | sha256 |
 |---|---|
 | `src/config.py` | `cc13fe7de36bcc78` |
 | `src/tickers.py` | `55d90dda280fe03b` |
-| `src/news_filter.py` | `7337a87300f48c77` |
+| `src/news_filter.py` | `9b9443c75821aa19` |
 | `src/events.py` | `c1aa9767b39b6c37` |
 | `src/finbert_score.py` | `989d3d2b68e4291a` |
-| `src/membership.py` | `b76b1d6a87e46df5` |
-| `src/prices.py` | `dbec4aa3aa46fed9` |
-| `src/features.py` | `08bc6cd50792f61c` |
+| `src/membership.py` | `359685b4a2588e17` |
+| `src/prices.py` | `2a07896674c51dd4` |
+| `src/features.py` | `8b8b3007877839ae` |
 | `src/regimes.py` | `2c7cff6185332cd6` |
 | `src/folds.py` | `7928e8248f163351` |
 | `src/models.py` | `226eadc99b9b72a2` |
 | `src/lstm.py` | `9722a1af7d105539` |
-| `src/edgar.py` | `c13179639f50ec2c` |
+| `src/edgar.py` | `73f116708be2fb81` |
 | `src/models_m4.py` | `9a9363b366c57448` |
 | `src/relevance.py` | `84f16b2dc7dbbabd` |
 | `src/models_rel.py` | `fcee2818c006d63b` |

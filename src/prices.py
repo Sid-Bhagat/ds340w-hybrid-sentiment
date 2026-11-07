@@ -34,7 +34,7 @@ def download(tickers):
 
 
 if __name__ == "__main__":
-    uni = get_universe()
+    uni = pd.read_csv(PROC / "universe.csv")      # saved (frozen) ticker list; do NOT re-scrape Wikipedia
     print("universe size", len(uni))
     df = download(uni["yf_ticker"].tolist() + ["SPY"])
     assert df["date"].max() < pd.Timestamp(end_date())

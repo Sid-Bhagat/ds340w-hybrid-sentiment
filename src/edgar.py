@@ -19,7 +19,7 @@ import numpy as np
 import pandas as pd
 import requests
 
-from config import PROC, RAW, SEAL_DATE, START
+from config import PROC, RAW, START, end_date
 
 EDGAR = RAW / "edgar"
 UA = {"User-Agent": "Siddhant Bhagat REDACTED", "Accept-Encoding": "gzip, deflate"}
@@ -160,7 +160,7 @@ def build():
     f["ts_et"] = parse_acceptance(f["acceptanceDateTime"])
     f = f.dropna(subset=["ts_et"])
     f["trade_date"] = to_trade_date(f["ts_et"], cal)
-    sealed = f["trade_date"].isna() | (f["trade_date"] >= pd.Timestamp(SEAL_DATE))
+    sealed = f["trade_date"].isna() | (f["trade_date"] >= pd.Timestamp(end_date()))
     keep = f.loc[~sealed].reset_index(drop=True)
     for name, df in [("edgar_8k.parquet", keep), ("edgar_8k_sealed_2023.parquet", f.loc[sealed])]:
         df.to_parquet(str(PROC / name) + ".tmp", index=False)
