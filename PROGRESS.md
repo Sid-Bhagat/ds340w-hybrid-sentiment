@@ -8,7 +8,8 @@ historical membership (HARD STOP 14:30, else revert to current constituents) -> 
 3b: start only if Phase 3 done by 19:00, drop if not done 22:00. All pre-2023 + MORNING_REPORT by 23:00.
 Step 1 DONE 13:20. Step 2 (1c) DONE 13:55: membership.parquet mask, 107/310 removed recovered.
 Phase 2 DONE 14:15 (panel 1,329,657 rows, 545 tickers; 13/13 leakage tests pass).
-Now: Phase 3 src/models.py + src/evaluate.py.
+Phase 3 DONE 14:35 (models.py 2 min, evaluate.py -> results/*.csv + tables/*.tex).
+Now: Phase 3b LSTM (src/lstm.py -> data/processed/preds_lstm.parquet; then rerun evaluate.py).
 
 ## Phase checklist
 - [x] Phase 0: universe + prices (data/processed/prices.parquet), committed dd03553
@@ -18,12 +19,13 @@ Now: Phase 3 src/models.py + src/evaluate.py.
   - [x] src/news_filter.py on All_external (06:03)  - [x] extended to both files (06:20)
   - [ ] src/events.py (empty stub), src/finbert_score.py
 - [x] 1b hand check (results/hand_check.csv, blind; key in hand_check_key.csv) | [x] 1c membership
-- [x] 2 panel + leakage tests | [ ] 3 models | [ ] 3b LSTM (deadline Sat 15:30) | [ ] 4 outputs
+- [x] 2 panel + leakage tests | [x] 3 models | [ ] 3b LSTM (deadline Sat 15:30) | [ ] 4 outputs
 
 ## Background jobs
 | job | cmd | PID | log | started | expected output |
 |---|---|---|---|---|---|
 (all earlier jobs finished: downloads, filter passes 1-4, finbert 1-4, symbol scan, membership)
+| models (Phase 3) | `cd src; python models.py` (nohup) | see log | logs/models.log | 2026-11-07 14:25 | data/processed/preds.parquet + results/coefs.csv; log ends DONE |
 Resume rule: check `ps -p 2091` and log tail before rerunning. HF resumes partial downloads (.incomplete in data/raw/.cache).
 
 ## Key file map
@@ -51,6 +53,7 @@ Resume rule: check `ps -p 2091` and log tail before rerunning. HF resumes partia
 - 2026-11-07 13:18 filter pass3 (aliases): 1,202,648 rows, 462 tickers, 0 nulls, max trade 2022-12-30; finbert3 scored 19,561 new; news_scored 1,202,648 rows
 - 2026-11-07 13:57 membership: 751 cos, 441 current + 107 recovered removed priced; priced/day 344 (2010)..472 (2022). filter pass4 1,387,883 rows 553 tickers; finbert4 +106,718; news_scored 1,387,883 rows
 - 2026-11-07 14:15 panel.parquet 1,329,657 x 27, 2010-02-02..2022-12-29, 0 nulls, y mean .499; market.parquet 3252; regimes.parquet 13742 (5 folds); pytest 13 passed
+- 2026-11-07 14:35 preds.parquet 574,824 test rows (2018-22), coefs.csv 405 rows; pooled AUC full M2 .5096 / li7 M2 .5255
 - 2026-11-07 06:35 hand_check: 200 rows (67 neg/67 neu/66 pos); agreement fn tested on fake labels
 
 ## Open problems

@@ -1,0 +1,12 @@
+\begin{tabular}{lllrrrr}
+\toprule
+test & base & model & days & mean\_daily\_logloss\_gain & nw\_t & p\_value \\
+\midrule
+H1: + sentiment & M1 & M2 & 1258 & 0.0001 & 1.0848 & 0.2780 \\
+H2 (OOS): + interactions & M2 & M3 & 1258 & -0.0000 & -0.3834 & 0.7014 \\
+placebo vs M1 & M1 & PLACEBO & 1258 & 0.0000 & 0.3574 & 0.7208 \\
+real vs shuffled sentiment & PLACEBO & M2 & 1258 & 0.0001 & 0.8277 & 0.4079 \\
++ regime & M0 & M1 & 1258 & -0.0000 & -0.1842 & 0.8539 \\
+LGBM vs M3 & M3 & LGBM & 1258 & -0.0012 & -1.4158 & 0.1568 \\
+\bottomrule
+\end{tabular}
