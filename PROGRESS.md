@@ -17,9 +17,10 @@ SUMMARY/FROZEN updated.
 Session 3d DONE 14:15: relevance-filter robustness (relevance.py, models_rel.py -> M2_rel/M3_rel); main spec
 unchanged (32 CSVs, diff 0). Session 3e DONE 14:45: rejected-headlines diagnostic (models_irr.py);
 39 CSVs diff 0. NO MORE ADDITIONS.
-Session 4: infra fixes committed; gate PASSED under Sid's option 1 (LSTM tol 1e-5; obs 9.2e-7).
-NOW: 2023 FINAL run per FROZEN.md. Pre-2023 data backed up to data/processed/pre2023/; FINAL outputs ->
-results/final_2023/ (2023-only) and results/final_2023/pooled_2018_2023/; frozen pre-2023 CSVs restored from git.
+Session 4 DONE (15:15): infra fixes + gate passed (option 1); 2023 HOLDOUT RUN ONCE with FINAL=1 per FROZEN.md.
+Outputs: results/final_2023/ (2023-only tests), results/final_2023/pooled_2018_2023/; figures now 2018-23.
+Verdict: no sentiment hypothesis confirmed; H1 reversed (Full t -2.53, Li-7 t -2.27); H3 confirmed in-sample.
+data/processed now holds FINAL (2010-2023) data; pre-2023 copy in data/processed/pre2023/. STOPPED.
 
 ## Phase checklist
 - [x] Phase 0: universe + prices (data/processed/prices.parquet), committed dd03553

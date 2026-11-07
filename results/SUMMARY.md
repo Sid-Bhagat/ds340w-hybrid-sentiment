@@ -566,5 +566,187 @@ is too small to say anything (all CIs are wide and include 0).
 10. The rejected-only diagnostic (M2_irr/M3_irr) was added after the relevance result had been seen.
 11. Hand check: `results/hand_check.csv` is handled in a separate session, and agreement / kappa are not
    reported here.
-12. 2023 results are not run. After "open 2023", rerun everything once with FINAL=1 and append a section
-   here.
+12. 2023 results: see "2023 holdout (confirmatory)" at the end (run once with FINAL=1, per FROZEN.md).
+
+## 2023 holdout (confirmatory)
+Run once on 2026-11-07 (~15:00-15:10) with FINAL=1, exactly as listed in `results/FROZEN.md`. Every
+model trains on 2010-2022 (rows whose target date is before 2023-01-01) and is tested on the **249 trading
+days of 2023**. Features, hyperparameters and seeds are unchanged. Outputs: `results/final_2023/` (2023
+only) and `results/final_2023/pooled_2018_2023/` (all folds rerun). The frozen 2018-2022 CSVs in
+`results/` are left as they were. Technical steps are logged in DECISIONS.md: BLDR's CIK was fetched
+because it was missing from the EDGAR cache, and a wrapper (`src/eval_2023.py`) runs the unchanged
+`evaluate.main` on the 2023 fold.
+
+**Verdict key.** Confirmed = same sign as hypothesised and p < 0.05 in 2023. Reversed = significant in the
+opposite direction (p < 0.05). Not confirmed = otherwise. Gain = mean daily log loss of base minus model
+(> 0: the added component helps). Note that 2023 has 249 test days against 1,258 in 2018-2022, so power is
+much lower.
+
+### 2023 coverage
+- **Full:** 154,733 headlines on panel stock-days; 40.3% of stock-days have news; 479 tickers/day
+  (491 unique). 8-K: 6,375 filings, 5.1% of stock-days (item 2.02 1.7%), 487 tickers.
+- **Li-7:** 29,455 headlines; **80.4%** of stock-days have news (vs 18-56% in 2018-22: FNSPID's 2023
+  mega-cap coverage is far denser). 8-K: 70 filings, 4.0% of stock-days.
+- Relevance filter: 45.3% of 2023 headlines (Full) and 31.9% (Li-7) name their company
+  (`final_2023/pooled_2018_2023/relevance_survival.csv`).
+
+### 2023 accuracy (`final_2023/metrics_*.csv`)
+**Full**
+
+| model | accuracy | AUC | log loss |
+|---|---|---|---|
+| M0 | 0.4989 | 0.4994 | 0.6932 |
+| M1 | 0.4941 | 0.4915 | 0.6935 |
+| M2 | 0.4932 | 0.4907 | 0.6936 |
+| M3 | 0.4936 | 0.4907 | 0.6936 |
+| PLACEBO | 0.4940 | 0.4913 | 0.6935 |
+| LGBM | 0.5018 | 0.5005 | 0.6941 |
+| LSTM | 0.4951 | 0.4942 | 0.6933 |
+| M4 | 0.4938 | 0.4909 | 0.6936 |
+| LGBM_M4 | 0.5012 | 0.5006 | 0.6941 |
+
+**Li-7**
+
+| model | accuracy | AUC | log loss |
+|---|---|---|---|
+| M0 | 0.5043 | 0.5334 | 0.6934 |
+| M1 | 0.5055 | 0.5519 | 0.6930 |
+| M2 | 0.4871 | 0.5389 | 0.6941 |
+| M3 | 0.4882 | 0.5395 | 0.6940 |
+| PLACEBO | 0.5077 | 0.5520 | 0.6930 |
+| LGBM | 0.5003 | 0.5345 | 0.6950 |
+| LSTM | 0.5198 | 0.5550 | 0.6930 |
+| M4 | 0.4859 | 0.5393 | 0.6939 |
+| LGBM_M4 | 0.5060 | 0.5319 | 0.6952 |
+
+### Primary hypotheses
+**Full universe**
+
+| test | 2018-22 frozen: gain (t, p) | 2023 gain | 2023 t | 2023 p | days | verdict |
+|---|---|---|---|---|---|---|
+| H1: M2 vs M1 (+ sentiment), all days | 1.65e-5 (t 1.24, p 0.214) | -8.20e-5 | -2.53 | 0.012 | 249 | **Reversed** |
+| H2 (OOS): M3 vs M2 (+ interactions) | -9.32e-6 (t -0.97, p 0.334) | 2.62e-6 | 0.45 | 0.651 | 249 | **Not confirmed** |
+
+- **H2 in-sample** (M3 fit on 2010-2022): sent_x_high 0.0176 (se 0.0225, p 0.435); surprise_x_high -0.0115 (p 0.605). Sentiment effect low-vol 0.0122 (se 0.0116), high-vol 0.0298 (se 0.0198). **Verdict: not confirmed.**
+- **H3** (2010-2022 training fit): p_high coefficient M1 0.0586 (p 0.0005), M2 0.0577 (p 0.0006), change -0.0009. The regime coefficient is significant and unchanged when sentiment is added. **Verdict: confirmed (in-sample).** Out of sample, though, adding the regime *hurt* in 2023:
+| test | 2018-22 frozen: gain (t, p) | 2023 gain | 2023 t | 2023 p | days | verdict |
+|---|---|---|---|---|---|---|
+| M1 vs M0 (+ regime), all days | 1.22e-4 (t 2.26, p 0.024) | -3.19e-4 | -2.29 | 0.022 | 249 | **Reversed** |
+
+**Li-7** (same fitted models; H2/H3 coefficients are the Full-universe fit)
+
+| test | 2018-22 frozen: gain (t, p) | 2023 gain | 2023 t | 2023 p | days | verdict |
+|---|---|---|---|---|---|---|
+| H1: M2 vs M1, all days | 1.07e-4 (t 1.08, p 0.278) | -1.03e-3 | -2.27 | 0.023 | 249 | **Reversed** |
+| H2 (OOS): M3 vs M2 | -7.83e-6 (t -0.38, p 0.701) | 3.20e-5 | 1.54 | 0.123 | 249 | **Not confirmed** |
+| M1 vs M0 (+ regime) | -2.12e-5 (t -0.18, p 0.854) | 4.09e-4 | 0.94 | 0.350 | 249 | **Not confirmed** |
+
+### News-days H1 and placebo
+**Full**
+
+| test | 2018-22 frozen: gain (t, p) | 2023 gain | 2023 t | 2023 p | days | verdict |
+|---|---|---|---|---|---|---|
+| H1 on news days (M2 vs M1) | 6.40e-5 (t 2.04, p 0.041) | -2.72e-4 | -1.80 | 0.072 | 249 | **Not confirmed (sign reversed)** |
+| Real vs shuffled sentiment, news days | 7.68e-5 (t 2.35, p 0.019) | -2.49e-4 | -1.64 | 0.102 | 249 | **Not confirmed (sign reversed)** |
+| Placebo vs M1, news days | -1.28e-5 (t -1.27, p 0.204) | -2.22e-5 | -1.70 | 0.089 | 249 | **Not confirmed** |
+| Real vs shuffled sentiment, all days | 2.77e-5 (t 1.77, p 0.077) | -6.30e-5 | -1.89 | 0.059 | 249 | **Not confirmed (sign reversed)** |
+| Placebo vs M1, all days | -1.11e-5 (t -1.41, p 0.157) | -1.90e-5 | -2.28 | 0.023 | 249 | **Placebo also hurts (p < 0.05)** |
+
+**Li-7**
+
+| test | 2018-22 frozen: gain (t, p) | 2023 gain | 2023 t | 2023 p | days | verdict |
+|---|---|---|---|---|---|---|
+| H1 on news days (M2 vs M1) | 1.23e-4 (t 0.39, p 0.697) | -1.34e-3 | -2.35 | 0.019 | 242 | **Reversed** |
+| Real vs shuffled sentiment, news days | 9.64e-5 (t 0.29, p 0.773) | -1.40e-3 | -2.42 | 0.016 | 242 | **Reversed** |
+| Placebo vs M1, news days | 2.70e-5 (t 0.22, p 0.828) | 6.66e-5 | 1.05 | 0.293 | 242 | **Not confirmed** |
+
+### All / relevant-only / rejected-only (H1 effect sizes, 2023 vs 2018-22)
+**Full**
+
+| news used | days | 2018-22 gain [95% CI] | 2023 gain | 2023 95% CI | t | p | news-day share | n days / stock-days |
+|---|---|---|---|---|---|---|---|---|
+| all headlines | all days | 1.65e-5 [-9.57e-6, 4.27e-5] | -8.20e-5 | [-1.46e-4, -1.84e-5] | -2.53 | 0.012 | 0.403 | 249 / 119,271 |
+| all headlines | news days | 6.40e-5 [2.59e-6, 1.25e-4] | -2.72e-4 | [-5.67e-4, 2.42e-5] | -1.80 | 0.072 | 0.403 | 249 / 48,010 |
+| relevant only | all days | -1.99e-6 [-1.71e-5, 1.32e-5] | -1.76e-5 | [-5.17e-5, 1.65e-5] | -1.01 | 0.312 | 0.289 | 249 / 119,271 |
+| relevant only | news days | -3.95e-6 [-6.79e-5, 6.00e-5] | -9.10e-5 | [-2.84e-4, 1.02e-4] | -0.92 | 0.356 | 0.289 | 249 / 34,470 |
+| rejected only | all days | 2.15e-5 [-6.61e-6, 4.97e-5] | -8.41e-5 | [-1.44e-4, -2.44e-5] | -2.76 | 0.006 | 0.268 | 249 / 119,271 |
+| rejected only | news days | 9.70e-5 [2.30e-6, 1.92e-4] | -3.46e-4 | [-6.78e-4, -1.42e-5] | -2.04 | 0.041 | 0.268 | 249 / 31,950 |
+
+**Li-7**
+
+| news used | days | 2018-22 gain [95% CI] | 2023 gain | 2023 95% CI | t | p | news-day share | n days / stock-days |
+|---|---|---|---|---|---|---|---|---|
+| all headlines | all days | 1.07e-4 [-8.60e-5, 2.99e-4] | -1.03e-3 | [-1.92e-3, -1.41e-4] | -2.27 | 0.023 | 0.804 | 249 / 1,743 |
+| all headlines | news days | 1.23e-4 [-4.98e-4, 7.44e-4] | -1.34e-3 | [-2.45e-3, -2.20e-4] | -2.35 | 0.019 | 0.804 | 242 / 1,402 |
+| relevant only | all days | 1.14e-4 [-1.71e-5, 2.46e-4] | -1.20e-3 | [-1.99e-3, -4.05e-4] | -2.96 | 0.003 | 0.785 | 249 / 1,743 |
+| relevant only | news days | 1.66e-4 [-3.30e-4, 6.63e-4] | -1.58e-3 | [-2.57e-3, -5.89e-4] | -3.12 | 0.002 | 0.785 | 242 / 1,369 |
+| rejected only | all days | 9.61e-5 [-1.42e-4, 3.34e-4] | -8.35e-4 | [-1.81e-3, 1.39e-4] | -1.68 | 0.093 | 0.804 | 249 / 1,743 |
+| rejected only | news days | 3.74e-5 [-7.60e-4, 8.35e-4] | -1.10e-3 | [-2.32e-3, 1.32e-4] | -1.75 | 0.080 | 0.804 | 242 / 1,402 |
+
+Rejected-only placebo tests, 2023 Full: on news days, real vs shuffled rejected sentiment -3.55e-4 (p 0.035). Relevant-only: real vs shuffled -4.94e-5 (p 0.614).
+
+**Verdicts.**
+- **Spillover pattern: reversed (Full).** In 2018-22 the news-day gain sat in rejected headlines (+9.7e-5, p 0.045). In 2023 rejected-only sentiment significantly *hurts*, on all days (p 0.006) and on news days (p 0.041), and it is worse than its shuffled placebo (p 0.035). Relevant-only stays not significant.
+- **Li-7: reversed.** Relevant-only sentiment significantly hurts in 2023 (news days p 0.002; vs shuffled p 0.001). Li-7 news coverage is far denser in 2023 than in any earlier year.
+
+### M4 (8-K features) and portfolios
+| test | 2018-22 frozen: gain (t, p) | 2023 gain | 2023 t | 2023 p | days | verdict |
+|---|---|---|---|---|---|---|
+| Full: M4 vs M3, all days | -7.06e-6 (t -1.74, p 0.081) | 2.71e-6 | 0.34 | 0.733 | 249 | **Not confirmed** |
+| Full: M4 vs M3, 8-K days | -1.71e-4 (t -1.95, p 0.051) | 1.36e-4 | 0.84 | 0.402 | 249 | **Not confirmed** |
+| Full: LGBM_M4 vs LGBM | 3.32e-5 (t 0.56, p 0.578) | -3.15e-5 | -0.38 | 0.704 | 249 | **Not confirmed** |
+| Li-7: M4 vs M3, all days | 1.32e-5 (t 0.50, p 0.618) | 7.74e-5 | 1.78 | 0.075 | 249 | **Not confirmed** |
+| Li-7: M4 vs M3, 8-K days | -3.82e-4 (t -0.61, p 0.540) | -4.85e-5 | -0.04 | 0.964 | 62 | **Not confirmed** |
+
+8-K coefficients in the 2010-2022 fit: none significant (all p > 0.27). **Verdict: M4 not confirmed**,
+consistent with the 2018-22 null.
+
+**Portfolios 2023, Full** (decile long-short; 10 bps/side)
+
+| model | daily gross bps (t) | daily net bps (t) | 5-day gross bps (t) | 5-day net bps (t) | 5-day turnover |
+|---|---|---|---|---|---|
+| M0 | -3.95 (-0.57) | -21.37 (-3.13) | -11.22 (-1.64) | -17.06 (-2.51) | 0.58 |
+| M1 | -4.46 (-0.60) | -21.58 (-2.95) | -12.89 (-1.74) | -18.50 (-2.51) | 0.56 |
+| M2 | -8.65 (-1.30) | -29.13 (-4.49) | -12.54 (-1.86) | -18.10 (-2.70) | 0.56 |
+| M3 | -8.44 (-1.30) | -28.86 (-4.57) | -11.76 (-1.80) | -17.33 (-2.66) | 0.56 |
+| PLACEBO | -4.54 (-0.62) | -23.14 (-3.23) | -12.01 (-1.67) | -17.67 (-2.47) | 0.57 |
+| LGBM | -3.30 (-0.84) | -35.26 (-9.12) | -7.69 (-1.91) | -14.49 (-3.59) | 0.68 |
+| LSTM | 0.60 (0.11) | -17.33 (-3.10) | -10.08 (-2.04) | -15.82 (-3.21) | 0.57 |
+| M4 | -7.76 (-1.21) | -28.59 (-4.57) | -12.51 (-1.88) | -18.12 (-2.73) | 0.56 |
+| LGBM_M4 | -3.59 (-0.81) | -35.48 (-8.02) | -6.72 (-1.56) | -13.46 (-3.11) | 0.67 |
+
+**Portfolios 2023, Li-7** (1 long / 1 short)
+
+| model | daily gross bps (t) | daily net bps (t) | 5-day gross bps (t) | 5-day net bps (t) | 5-day turnover |
+|---|---|---|---|---|---|
+| M0 | 5.05 (0.30) | -13.02 (-0.80) | -14.95 (-0.78) | -20.57 (-1.09) | 0.56 |
+| M1 | 0.11 (0.01) | -16.76 (-1.10) | -13.90 (-0.80) | -19.12 (-1.11) | 0.52 |
+| M2 | 11.31 (0.82) | -12.38 (-0.92) | -25.58 (-1.62) | -30.96 (-1.97) | 0.54 |
+| M3 | 7.76 (0.57) | -16.01 (-1.21) | -30.44 (-1.99) | -35.82 (-2.35) | 0.54 |
+| PLACEBO | 0.61 (0.04) | -16.58 (-1.07) | -2.97 (-0.17) | -8.12 (-0.46) | 0.51 |
+| LGBM | 24.59 (1.53) | -4.40 (-0.28) | 7.67 (0.61) | 1.16 (0.09) | 0.65 |
+| LSTM | 7.45 (0.43) | -12.07 (-0.72) | -15.98 (-0.99) | -21.36 (-1.34) | 0.54 |
+| M4 | 7.80 (0.56) | -16.13 (-1.20) | -28.65 (-1.82) | -34.11 (-2.18) | 0.55 |
+| LGBM_M4 | 16.48 (0.93) | -13.32 (-0.76) | 21.87 (1.77) | 15.37 (1.25) | 0.65 |
+
+**Verdict: not confirmed.** Every daily strategy loses after costs on the Full universe (-17 to -35
+bps/day, t -2.95 to -9.1). Daily gross spreads are near zero or negative and not significant (-8.7 to +0.6 bps). The 5-day gross spreads,
+positive and significant in 2018-22 (about +10 bps, t about 2.3), are negative in 2023 (-6.7 to -12.9
+bps, t -1.56 to -2.04; significant only for the LSTM at t -2.04 and borderline for LightGBM at t -1.91).
+On Li-7 everything is not significant except M3 5-day (gross -30.4 bps, t -1.99, borderline).
+
+### Bottom line
+In the confirmatory 2023 holdout, **no sentiment hypothesis is confirmed**. Adding sentiment to the
+regime model (H1) makes out-of-sample predictions significantly *worse* on the Full universe (t -2.53)
+and on Li-7 (t -2.27). On the Full universe a shuffled-sentiment placebo with the same columns also hurts
+(t -2.28), so much of the loss is generic overfitting from adding ~15 inputs when the year differs from
+training. Real sentiment is no better than shuffled (all days p 0.059; news days p 0.10). On Li-7, real
+sentiment is significantly worse than shuffled (p 0.020). The interaction effect (H2) is not confirmed.
+The regime coefficient is stable and significant in the training fit (H3 confirmed in-sample), but the
+regime also hurts out of sample in 2023 (t -2.29). Pooled over 2018-2023 (rerun), H1 is t 0.01 and real
+vs shuffled is t 0.89.
+
+### Rerun drift
+The FINAL rerun re-downloaded adjusted prices and added a target for 2022-12-30. Its 2018-2022 fold metrics
+differ from the frozen ones by at most 0.0043 AUC, 0.00045 log loss and 0.0031 accuracy. The frozen
+2018-2022 numbers above remain the reference.

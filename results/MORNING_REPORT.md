@@ -59,6 +59,21 @@
   [2.3e-6, 1.9e-4], p = 0.045, against relevant-only -4.0e-6 [-6.8e-5, 6.0e-5] with a similar SE. That
   points to spillover (sector/peer/market news), not low power. Main results unchanged (39 CSVs, diff 0).
 
+## Update (15:15): 2023 HOLDOUT (confirmatory, run once with FINAL=1)
+- Gate passed under your option 1 (LSTM tolerance 1e-5). Infra fixes committed, then everything in
+  FROZEN.md was run once on 2023 (249 test days, 119,271 stock-days; Li-7 1,743).
+- **No sentiment hypothesis is confirmed.** H1 is reversed: sentiment makes 2023 predictions worse (Full
+  gain -8.2e-5, t -2.53; Li-7 t -2.27). The shuffled placebo also hurts on Full (t -2.28), so much of the
+  loss is generic overfitting from adding inputs. On Li-7, real sentiment is worse than shuffled (p 0.020).
+  H2 not confirmed (OOS p 0.65; in-sample interaction p 0.44). H3 confirmed in-sample (regime coefficient
+  0.059, p 0.0005, unchanged with sentiment), but the regime hurts out of sample in 2023 (t -2.29).
+- News-days H1 and placebo: not confirmed on Full (sign reversed, p 0.07 / 0.10); reversed on Li-7.
+  The 2018-22 "spillover" pattern reversed: rejected-headline sentiment significantly hurts in 2023 (p 0.041).
+- M4 (8-K): not confirmed. Portfolios: every daily strategy loses after costs; the 5-day gross spread
+  that was positive in 2018-22 is negative in 2023 (about -7 to -13 bps/day, mostly not significant).
+- 2023 coverage: 154,733 headlines (40.3% of stock-days with news); Li-7 80.4%; 8-Ks 5.1% of stock-days.
+- Details: SUMMARY.md "2023 holdout (confirmatory)"; files in results/final_2023/.
+
 ## Caveats for the paper (details in SUMMARY.md)
 - 2021 news is thin: 61,896 headlines, 24.5% of stock-days have news (vs about 53% in 2018-19).
 - Li-7 news is sparse in FNSPID: AMZN and META only in 2020, MSFT only in 2022, AAPL only in 2020 and 2022.

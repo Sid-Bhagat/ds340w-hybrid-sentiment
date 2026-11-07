@@ -100,8 +100,8 @@ def regime_timeline():
         ax.fill_between(oos.index, 0, 1, where=hi.values, transform=ax.get_xaxis_transform(),
                         color="#eb6834", alpha=0.12, linewidth=0)
     ins = last.loc[last.index < oos.index.min()]
-    a2.plot(ins.index, ins["p_high"], color="#2a78d6", linewidth=0.8, label="2010-17: filtered with the 2022-fold fit (in-sample)")
-    a2.plot(oos.index, oos["p_high"], color="#eb6834", linewidth=0.8, label="2018-22: filtered, each test year with its own fold fit")
+    a2.plot(ins.index, ins["p_high"], color="#2a78d6", linewidth=0.8, label=f"{ins.index.min().year}-{ins.index.max().year % 100:02d}: filtered with the {int(last['fold'].max())}-fold fit (in-sample)")
+    a2.plot(oos.index, oos["p_high"], color="#eb6834", linewidth=0.8, label=f"{oos.index.min().year}-{oos.index.max().year % 100:02d}: filtered, each test year with its own fold fit")
     a2.set_ylabel("P(high-vol regime)")
     a2.set_ylim(0, 1)
     a2.legend(fontsize=7, loc="lower left", ncol=2, bbox_to_anchor=(0, 1.0))

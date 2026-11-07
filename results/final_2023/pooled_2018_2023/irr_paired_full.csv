@@ -1,0 +1,4 @@
+test,base,model,days,mean_daily_logloss_gain,nw_t,p_value
+H1_irr: + rejected-headline sentiment,M1,M2_irr,1508,3.871823067507904e-06,0.29295465078605276,0.7695568150665233
+placebo_irr vs M1,M1,PLACEBO_irr,1508,-1.3993902873333475e-05,-2.3538002999114895,0.01858259127807792
+real vs shuffled rejected sentiment,PLACEBO_irr,M2_irr,1508,1.7865725940841378e-05,1.236900779581531,0.21612392060608598

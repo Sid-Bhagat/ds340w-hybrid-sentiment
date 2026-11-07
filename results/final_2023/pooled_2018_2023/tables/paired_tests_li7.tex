@@ -1,0 +1,22 @@
+\begin{tabular}{lllrrrr}
+\toprule
+test & base & model & days & mean\_daily\_logloss\_gain & nw\_t & p\_value \\
+\midrule
+H1: + sentiment & M1 & M2 & 1508 & -0.0001 & -0.7383 & 0.4603 \\
+H2 (OOS): + interactions & M2 & M3 & 1508 & -0.0000 & -0.0710 & 0.9434 \\
+placebo vs M1 & M1 & PLACEBO & 1508 & 0.0000 & 0.5912 & 0.5544 \\
+real vs shuffled sentiment & PLACEBO & M2 & 1508 & -0.0001 & -0.8787 & 0.3796 \\
++ regime & M0 & M1 & 1508 & 0.0001 & 0.4155 & 0.6777 \\
+LGBM vs M3 & M3 & LGBM & 1508 & -0.0011 & -1.5865 & 0.1126 \\
+LSTM vs M3 & M3 & LSTM & 1508 & -0.0001 & -0.3367 & 0.7363 \\
+M4 vs M3: + 8-K & M3 & M4 & 1508 & 0.0000 & 1.0240 & 0.3058 \\
+LGBM: + 8-K inputs & LGBM & LGBM\_M4 & 1508 & -0.0000 & -0.0149 & 0.9881 \\
+H1\_rel: + relevant sentiment & M1 & M2\_rel & 1508 & -0.0001 & -1.0858 & 0.2775 \\
+H2\_rel (OOS): + interactions & M2\_rel & M3\_rel & 1508 & 0.0000 & 0.2502 & 0.8025 \\
+placebo\_rel vs M1 & M1 & PLACEBO\_rel & 1508 & 0.0001 & 2.4867 & 0.0129 \\
+real vs shuffled relevant sentiment & PLACEBO\_rel & M2\_rel & 1508 & -0.0002 & -1.8980 & 0.0577 \\
+H1\_irr: + rejected-headline sentiment & M1 & M2\_irr & 1508 & -0.0001 & -0.4655 & 0.6415 \\
+placebo\_irr vs M1 & M1 & PLACEBO\_irr & 1508 & -0.0001 & -1.1885 & 0.2346 \\
+real vs shuffled rejected sentiment & PLACEBO\_irr & M2\_irr & 1508 & -0.0000 & -0.0683 & 0.9456 \\
+\bottomrule
+\end{tabular}
