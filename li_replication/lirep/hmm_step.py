@@ -31,7 +31,20 @@ def fit_hmm_for_stock(stock_features, pca_components, seed=SEED):
         n_iter=HMM_N_ITER, random_state=seed,
     )
     model.fit(X_norm)
+    raw_states = model.predict(X_norm)
+
+    # Deterministic labels: state 0 = lowest mean weekly return, state 3 =
+    # highest. The fitted parameters are permuted, so the model and its
+    # decoded states use the same labels. The fit itself is unchanged.
+    means = [merged["return"].values[raw_states == s].mean() for s in range(HMM_N_STATES)]
+    order = np.argsort(means, kind="stable")
+    model.startprob_ = model.startprob_[order]
+    model.transmat_ = model.transmat_[np.ix_(order, order)]
+    model.means_ = model.means_[order]
+    model._covars_ = model._covars_[order]
     states = model.predict(X_norm)
+    assert np.array_equal(states, np.argsort(order)[raw_states]), "relabelling changed the decoding"
+
     return pd.Series(states, index=merged.index, name="state"), model, model.score(X_norm)
 
 

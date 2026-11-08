@@ -6,6 +6,13 @@
 Missing tickers in the data directory are downloaded from Yahoo Finance.
 """
 
+import os
+
+# One thread for BLAS/OpenMP: multithreaded sums change the last bits of the
+# HMM log-likelihoods between runs. Must be set before numpy is imported.
+for _var in ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS"):
+    os.environ.setdefault(_var, "1")
+
 import argparse
 import json
 import platform

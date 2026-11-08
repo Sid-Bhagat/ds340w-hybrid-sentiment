@@ -1,0 +1,17 @@
+## Port with September labels (commit 8bcc610, before relabelling)
+266/266 values match within rel tol 1e-08; max rel coef diff 1.14e-11, max abs p diff 1.19e-14; same state labels; figures pixel-identical 13/14 (GOOGL price trend: 8 frame-corner pixels)
+
+## Final code (states ordered by mean return, single-threaded BLAS) on old/data vs old/outputs
+AMZN: state mapping new->old {0: 3, 1: 0, 2: 2, 3: 1} (relabelled), max rel diff eq17 coefs 3.95e-14
+AAPL: state mapping new->old {0: 2, 1: 3, 2: 0, 3: 1} (relabelled), max rel diff eq17 coefs 1.30e-14
+GOOGL: state mapping new->old {0: 1, 1: 3, 2: 2, 3: 0} (relabelled), max rel diff eq17 coefs 1.49e-13
+META: state mapping new->old {0: 1, 1: 3, 2: 2, 3: 0} (relabelled), max rel diff eq17 coefs 2.71e-14
+MSFT: state mapping new->old {0: 0, 1: 1, 2: 3, 3: 2} (relabelled), max rel diff eq17 coefs 1.59e-14
+NVDA: state mapping new->old {0: 3, 1: 0, 2: 1, 3: 2} (relabelled), max rel diff eq17 coefs 2.66e-14
+TSLA: state mapping new->old {0: 0, 1: 1, 2: 3, 3: 2} (relabelled), max rel diff eq17 coefs 1.98e-13
+246/266 values match within rel tol 1e-08; max rel coef diff 1.33e-04, max abs p diff 6.11e-05
+figures pixel-identical: 0/14
+
+## Two runs of the final code on old/data
+22 files in A, 22 in B; same file list: True
+byte-identical (excluding run_info.json): 21/21
