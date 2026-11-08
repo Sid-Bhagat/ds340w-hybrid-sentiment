@@ -129,6 +129,59 @@ def compare_identical(a, b):
     return fa == fb and not diff
 
 
+def compare_changes(ref_dir, new_dir):
+    """Sign and 5%-significance changes between two runs of this code (e.g.
+    the September cache vs a fresh download). States are matched by the
+    permutation with the largest share of weeks in the same state."""
+    ws_ref = pd.read_csv(ref_dir / "hmm_states_weekly.csv", index_col=0)
+    ws_new = pd.read_csv(new_dir / "hmm_states_weekly.csv", index_col=0)
+    rows, agree_rows = [], []
+    for eq in ["eq16", "eq17"]:
+        ref = pd.read_csv(ref_dir / f"{eq}.csv")
+        new = pd.read_csv(new_dir / f"{eq}.csv")
+        for t in new.ticker.unique():
+            a, b = ws_new[t].dropna().astype(int), ws_ref[t].dropna().astype(int)
+            a, b = a.align(b, join="inner")
+            ks = sorted(a.unique())
+            m = max((dict(zip(map(int, ks), map(int, p)))
+                     for p in itertools.permutations(sorted(b.unique()))),
+                    key=lambda m: (a.map(m) == b).mean())
+            if eq == "eq16":
+                agree_rows.append({"ticker": t, "mapping_new_to_ref": str(m),
+                                   "share_weeks_same_state": (a.map(m) == b).mean(),
+                                   "share_weeks_same_label": (a == b).mean()})
+            n_t, r_t = new[new.ticker == t], ref[ref.ticker == t]
+            for _, r in n_t.iterrows():
+                term, ref_state = r.term, None
+                if eq == "eq17":
+                    ref_state = m[int(r.state)]
+                    rr = r_t[(r_t.state == ref_state) & (r_t.term == term)]
+                elif term == "const" or term.startswith("state_"):
+                    # The constant and the dummies are relative to the base
+                    # state 0; they are comparable only if it maps to state 0.
+                    if m[0] != 0:
+                        continue
+                    rr = r_t[r_t.term == (term if term == "const"
+                                          else f"state_{m[int(term.split('_')[1])]}")]
+                else:
+                    rr = r_t[r_t.term == term]
+                if rr.empty:
+                    continue
+                rr = rr.iloc[0]
+                rows.append({
+                    "ticker": t, "model": eq,
+                    "state": r.state if eq == "eq17" else np.nan,
+                    "ref_state": ref_state if eq == "eq17" else np.nan,
+                    "term": term if not term.startswith("state_") else
+                    f"{term} (ref {rr.term})",
+                    "coef_ref": rr.coef, "coef_new": r.coef,
+                    "p_ref": rr.pvalue, "p_new": r.pvalue,
+                    "sign_changed": np.sign(rr.coef) != np.sign(r.coef),
+                    "sig5_changed": (rr.pvalue < 0.05) != (r.pvalue < 0.05),
+                })
+    return pd.DataFrame(rows), pd.DataFrame(agree_rows)
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -140,7 +193,23 @@ def main():
     i = sub.add_parser("identical")
     i.add_argument("dir_a", type=Path)
     i.add_argument("dir_b", type=Path)
+    c = sub.add_parser("changes")
+    c.add_argument("ref_dir", type=Path)
+    c.add_argument("new_dir", type=Path)
+    c.add_argument("--save", type=Path, help="CSV prefix for the change tables")
     args = ap.parse_args()
+
+    if args.cmd == "changes":
+        df, agree = compare_changes(args.ref_dir, args.new_dir)
+        print(agree.to_string(index=False))
+        flips = df[df.sign_changed | df.sig5_changed]
+        print(f"\n{len(flips)} of {len(df)} coefficients changed sign or 5% significance:")
+        print(flips.to_string(index=False))
+        if args.save:
+            from lirep.io_utils import save_csv
+            save_csv(df, f"{args.save}_coefficients.csv", index=False)
+            save_csv(agree, f"{args.save}_state_agreement.csv", index=False)
+        return
 
     if args.cmd == "september":
         df = compare_september(args.results_dir, args.old_dir)
