@@ -19,25 +19,51 @@ END_DATE = "2024-12-31"  # yfinance treats `end` as exclusive
 # The seven large tech stocks in the paper.
 TECH_TICKERS = ["AMZN", "AAPL", "GOOGL", "META", "MSFT", "NVDA", "TSLA"]
 
-# Market / macro series used as PCA input (Section 4.1): stock indices,
-# long and short rates, commodities, and the dollar index.
-MACRO_TICKERS = {
-    "SP500": "^GSPC",
-    "NASDAQ": "^IXIC",
-    "RATE_LONG_10Y": "^TNX",
-    "RATE_SHORT_13W": "^IRX",
-    "GOLD": "GC=F",
-    "CRUDE_OIL": "CL=F",
-    "USD_INDEX": "DX-Y.NYB",
+# PCA input sets (--pca-set). Each maps a series name to its yfinance ticker.
+#
+# "li" (default): the 12 market/macro series of Li's Table 1 (p. 10), with
+#   5 principal components ("The PCA step involves construct five principal
+#   components", Section 4.2, p. 10).
+# "original": the September 2026 replication, 7 series, keeping enough
+#   components for >= 75% of the variance (at most 5), which gives 4.
+PCA_SETS = {
+    "li": {
+        "series": {
+            "NASDAQ": "^IXIC",            # Nasdaq Index
+            "SP500": "^GSPC",             # S&P 500 Index
+            "RATE_13W": "^IRX",           # 13 Wk Treasury
+            "RATE_5Y": "^FVX",            # 5 Yr Treasury
+            "RATE_10Y": "^TNX",           # 10 Yr Treasury
+            "RATE_30Y": "^TYX",           # 30 Yr Treasury
+            "CRUDE_OIL": "CL=F",          # Crude Oil (WTI front month)
+            "GOLD": "GC=F",               # Gold (front month)
+            "NATURAL_GAS": "NG=F",        # Natural Gas (front month)
+            "EUR_USD": "EURUSD=X",        # EUR/USD
+            "JPY_USD": "JPYUSD=X",        # JPY/USD (USD per yen)
+            "AUD_USD": "AUDUSD=X",        # AUD/USD
+        },
+        "n_components": 5,
+    },
+    "original": {
+        "series": {
+            "SP500": "^GSPC",
+            "NASDAQ": "^IXIC",
+            "RATE_10Y": "^TNX",
+            "RATE_13W": "^IRX",
+            "GOLD": "GC=F",
+            "CRUDE_OIL": "CL=F",
+            "USD_INDEX": "DX-Y.NYB",
+        },
+        "variance_target": 0.75,
+        "max_components": 5,
+    },
 }
-RATE_SERIES = {"RATE_LONG_10Y", "RATE_SHORT_13W"}  # differenced, not pct-changed
+DEFAULT_PCA_SET = "li"
+# Rate series are differenced; all others enter as weekly percentage returns.
+RATE_SERIES = {"RATE_13W", "RATE_5Y", "RATE_10Y", "RATE_30Y"}
 
 # Market control in the regressions (S&P 500 weekly return).
 BENCHMARK_TICKER = "^GSPC"
-
-# PCA: keep enough components for >= 75% variance, at most 5.
-PCA_VARIANCE_TARGET = 0.75
-PCA_MAX_COMPONENTS = 5
 
 # HMM: 4 hidden states (the paper's AIC/BIC-based choice), fitted on the
 # full sample as in the paper.
@@ -46,8 +72,16 @@ HMM_N_ITER = 1000
 HMM_CANDIDATE_STATES = (2, 3, 4, 5, 6)
 SEED = 42
 
-# Momentum: one-lag autocovariance of weekly return over the past 4 weeks.
+# Momentum: one-lag autocovariance of weekly return "in the past month
+# (4 weeks)" (Section 4.3, p. 11; no equation is given).
+#   "li": window = weeks t-4..t-1 (excludes week t). This reproduces Li's
+#         Table 3 correlations and Table 4 all-weeks momentum coefficients.
+#   "september": window = weeks t-3..t (includes week t), as in the
+#         September 2026 code.
+# --momentum defaults to "september" with --pca-set original (so that setup
+# reproduces the September results) and to "li" otherwise.
 MOMENTUM_LOOKBACK_WEEKS = 4
+MOMENTUM_DEFINITIONS = ("li", "september")
 
 # Eq. 17 is skipped for a state with fewer weeks than this.
 MIN_OBS_PER_STATE = 6

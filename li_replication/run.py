@@ -1,7 +1,7 @@
 """Li (2025) PCA-HMM replication: end-to-end entry point.
 
     python run.py                          # cache in ./data, results in ./results
-    python run.py --data-dir old/data --results-dir /tmp/check
+    python run.py --pca-set original --data-dir old/data --results-dir path/to/output
 
 Missing tickers in the data directory are downloaded from Yahoo Finance.
 """
@@ -24,8 +24,9 @@ import numpy as np
 import pandas as pd
 
 from lirep.config import (
-    TECH_TICKERS, MACRO_TICKERS, BENCHMARK_TICKER, HMM_N_STATES, SEED,
-    DEFAULT_DATA_DIR, DEFAULT_RESULTS_DIR,
+    TECH_TICKERS, PCA_SETS, DEFAULT_PCA_SET, MOMENTUM_DEFINITIONS,
+    BENCHMARK_TICKER, HMM_N_STATES, SEED, DEFAULT_DATA_DIR, DEFAULT_RESULTS_DIR,
+    PROJECT_DIR,
 )
 from lirep.data import load_all_data
 from lirep.features import build_stock_features, build_macro_returns, weekly_return
@@ -39,6 +40,16 @@ from lirep.plots import plot_price_trend, plot_state_boxplots
 from lirep.io_utils import save_csv, save_text
 
 warnings.filterwarnings("ignore")
+
+
+def _portable_path(path):
+    """Path relative to the project folder, so run_info.json holds no
+    machine-specific absolute paths; outside paths keep only their name."""
+    p = Path(path).resolve()
+    try:
+        return str(p.relative_to(PROJECT_DIR))
+    except ValueError:
+        return f"<outside project>/{p.name}"
 
 
 def state_summary(ticker, model, reg_df):
@@ -65,8 +76,18 @@ def main():
                     help="folder with the per-ticker weekly CSV cache (default: ./data)")
     ap.add_argument("--results-dir", type=Path, default=DEFAULT_RESULTS_DIR,
                     help="output folder (default: ./results)")
+    ap.add_argument("--pca-set", choices=sorted(PCA_SETS), default=DEFAULT_PCA_SET,
+                    help="PCA inputs: 'li' = Li's 12 Table 1 series, 5 PCs (default); "
+                         "'original' = the September 2026 7 series, 75%% rule (4 PCs)")
+    ap.add_argument("--momentum", choices=MOMENTUM_DEFINITIONS, default=None,
+                    help="'li' = window t-4..t-1; 'september' = window t-3..t "
+                         "(default: 'september' with --pca-set original, else 'li')")
     ap.add_argument("--seed", type=int, default=SEED)
     args = ap.parse_args()
+    if args.momentum is None:
+        args.momentum = "september" if args.pca_set == "original" else "li"
+    pca_cfg = PCA_SETS[args.pca_set]
+    macro_tickers = pca_cfg["series"]
 
     random.seed(args.seed)
     np.random.seed(args.seed)
@@ -74,13 +95,18 @@ def main():
     fig_dir = out / "figures"
     fig_dir.mkdir(parents=True, exist_ok=True)
 
-    print(f"=== Data: {args.data_dir} ===")
-    raw = load_all_data(args.data_dir)
+    print(f"=== Data: {args.data_dir} | PCA set: {args.pca_set} | momentum: {args.momentum} ===")
+    raw = load_all_data(args.data_dir, macro_tickers.values())
 
     print("=== PCA on macro series ===")
-    macro = build_macro_returns({name: raw[t] for name, t in MACRO_TICKERS.items()})
-    pcs, variance, n_pcs = run_pca(macro)
+    macro = build_macro_returns({name: raw[t] for name, t in macro_tickers.items()})
+    pcs, variance, n_pcs, loadings = run_pca(
+        macro, n_components=pca_cfg.get("n_components"),
+        variance_target=pca_cfg.get("variance_target"),
+        max_components=pca_cfg.get("max_components", 5),
+    )
     save_csv(variance, out / "pca_explained_variance.csv", index=False)
+    save_csv(loadings, out / "pca_loadings.csv")
 
     benchmark = weekly_return(raw[BENCHMARK_TICKER]).rename("return")
 
@@ -88,7 +114,7 @@ def main():
     state_rows, fit_rows, sel_rows, state_series = [], [], [], []
     for ticker in TECH_TICKERS:
         print(f"=== {ticker} ===")
-        feats = build_stock_features(raw[ticker])
+        feats = build_stock_features(raw[ticker], args.momentum)
 
         sel = select_n_states(feats, pcs, seed=args.seed)
         sel.insert(0, "ticker", ticker)
@@ -135,9 +161,13 @@ def main():
 
     import hmmlearn, matplotlib, sklearn, statsmodels, yfinance
     info = {
-        "data_dir": str(args.data_dir.resolve()),
+        "data_dir": _portable_path(args.data_dir),
         "seed": args.seed,
+        "pca_set": args.pca_set,
+        "pca_series": macro_tickers,
+        "momentum": args.momentum,
         "n_pcs": n_pcs,
+        "pca_cumulative_variance": float(variance["cumulative"].iloc[n_pcs - 1]),
         "weeks_per_ticker": {t: int(len(raw[t])) for t in raw},
         "first_week": str(min(df.index.min() for df in raw.values()).date()),
         "last_week": str(max(df.index.max() for df in raw.values()).date()),

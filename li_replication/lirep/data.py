@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from .config import START_DATE, END_DATE, TECH_TICKERS, MACRO_TICKERS
+from .config import START_DATE, END_DATE, TECH_TICKERS, BENCHMARK_TICKER
 
 
 def cache_path(data_dir, ticker):
@@ -61,7 +61,8 @@ def download_weekly(ticker, data_dir, retries=3, pause=2.0):
     raise RuntimeError(f"Failed to download {ticker} after {retries} attempts: {last_err}")
 
 
-def load_all_data(data_dir):
-    """Every ticker the pipeline needs: {ticker: OHLCV DataFrame}."""
-    tickers = list(TECH_TICKERS) + list(MACRO_TICKERS.values())
+def load_all_data(data_dir, macro_tickers):
+    """The stocks, the benchmark and the given PCA series:
+    {ticker: OHLCV DataFrame}."""
+    tickers = list(dict.fromkeys(list(TECH_TICKERS) + [BENCHMARK_TICKER] + list(macro_tickers)))
     return {t: download_weekly(t, data_dir) for t in tickers}
