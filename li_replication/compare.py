@@ -56,7 +56,7 @@ def compare_september(new_dir, old_dir):
         best, best_err = None, np.inf
         if len(new_states) == len(old_states):
             for perm in itertools.permutations(old_states):
-                m = dict(zip(new_states, perm))
+                m = dict(zip(map(int, new_states), map(int, perm)))
                 err = 0.0
                 for s in new_states:
                     a = n17[n17.state == s].set_index("term").coef
@@ -136,9 +136,9 @@ def compare_changes(ref_dir, new_dir):
     ws_ref = pd.read_csv(ref_dir / "hmm_states_weekly.csv", index_col=0)
     ws_new = pd.read_csv(new_dir / "hmm_states_weekly.csv", index_col=0)
     rows, agree_rows = [], []
-    for eq in ["eq16", "eq17"]:
-        ref = pd.read_csv(ref_dir / f"{eq}.csv")
-        new = pd.read_csv(new_dir / f"{eq}.csv")
+    for eq, fname in [("eq16", "eq16"), ("eq17", "eq17"), ("eq17_all", "eq17_all_weeks")]:
+        ref = pd.read_csv(ref_dir / f"{fname}.csv")
+        new = pd.read_csv(new_dir / f"{fname}.csv")
         for t in new.ticker.unique():
             a, b = ws_new[t].dropna().astype(int), ws_ref[t].dropna().astype(int)
             a, b = a.align(b, join="inner")
@@ -156,7 +156,7 @@ def compare_changes(ref_dir, new_dir):
                 if eq == "eq17":
                     ref_state = m[int(r.state)]
                     rr = r_t[(r_t.state == ref_state) & (r_t.term == term)]
-                elif term == "const" or term.startswith("state_"):
+                elif eq == "eq16" and (term == "const" or term.startswith("state_")):
                     # The constant and the dummies are relative to the base
                     # state 0; they are comparable only if it maps to state 0.
                     if m[0] != 0:

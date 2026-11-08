@@ -31,7 +31,10 @@ from lirep.data import load_all_data
 from lirep.features import build_stock_features, build_macro_returns, weekly_return
 from lirep.pca_step import run_pca
 from lirep.hmm_step import fit_hmm_for_stock, select_n_states
-from lirep.regression import build_regression_frame, run_eq16, run_eq17, tidy
+from lirep.regression import (
+    build_regression_frame, run_eq16, run_eq17, run_eq17_all_weeks, tidy,
+    state_dummies_ftest,
+)
 from lirep.plots import plot_price_trend, plot_state_boxplots
 from lirep.io_utils import save_csv, save_text
 
@@ -81,7 +84,8 @@ def main():
 
     benchmark = weekly_return(raw[BENCHMARK_TICKER]).rename("return")
 
-    eq16_rows, eq17_rows, state_rows, fit_rows, sel_rows, state_series = [], [], [], [], [], []
+    eq16_rows, eq17_rows, eq17_all_rows, ftest_rows, desc_rows = [], [], [], [], []
+    state_rows, fit_rows, sel_rows, state_series = [], [], [], []
     for ticker in TECH_TICKERS:
         print(f"=== {ticker} ===")
         feats = build_stock_features(raw[ticker])
@@ -100,6 +104,15 @@ def main():
         m16 = run_eq16(reg_df)
         m17 = run_eq17(reg_df)
         eq16_rows.append(tidy(m16, ticker, "eq16"))
+        ftest_rows.append({"ticker": ticker, **state_dummies_ftest(m16)})
+        # Li Table 2 analogue: weekly return, momentum and volume on the regression sample.
+        for var in ["return", "momentum", "volume"] + (["sp500_return"] if ticker == TECH_TICKERS[0] else []):
+            s = reg_df[var]
+            desc_rows.append({"series": "S&P 500" if var == "sp500_return" else ticker,
+                              "variable": "return" if var == "sp500_return" else var,
+                              "mean": s.mean(), "std": s.std(), "max": s.max(),
+                              "min": s.min(), "n": len(s)})
+        eq17_all_rows.append(tidy(run_eq17_all_weeks(reg_df), ticker, "eq17_all"))
         for s, m in m17.items():
             eq17_rows.append(tidy(m, ticker, "eq17", state=s))
 
@@ -112,6 +125,9 @@ def main():
 
     save_csv(pd.concat(eq16_rows, ignore_index=True), out / "eq16.csv", index=False)
     save_csv(pd.concat(eq17_rows, ignore_index=True), out / "eq17.csv", index=False)
+    save_csv(pd.concat(eq17_all_rows, ignore_index=True), out / "eq17_all_weeks.csv", index=False)
+    save_csv(pd.DataFrame(ftest_rows), out / "eq16_state_dummies_ftest.csv", index=False)
+    save_csv(pd.DataFrame(desc_rows), out / "descriptive_stats.csv", index=False)
     save_csv(pd.concat(state_rows, ignore_index=True), out / "hmm_states.csv", index=False)
     save_csv(pd.DataFrame(fit_rows), out / "hmm_fit.csv", index=False)
     save_csv(pd.concat(sel_rows, ignore_index=True), out / "hmm_state_selection.csv", index=False)
