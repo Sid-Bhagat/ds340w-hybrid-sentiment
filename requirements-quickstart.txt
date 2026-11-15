@@ -1,0 +1,8 @@
+# Minimal, CPU-only requirements for quickstart.py (no CUDA, no data download).
+# Same versions as the full pipeline venv; torch is the CPU wheel from the PyTorch index.
+--extra-index-url https://download.pytorch.org/whl/cpu
+numpy==2.4.6
+pandas==3.1.1
+scipy==1.17.1
+lightgbm==4.7.0
+torch==2.6.0+cpu

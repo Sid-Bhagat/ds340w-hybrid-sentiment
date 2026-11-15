@@ -4,3 +4,4 @@ __pycache__/
 *.parquet
 logs/
 docs/
+.venv-quick/

@@ -55,3 +55,5 @@ Resume rule: check `ps -p 2091` and log tail before rerunning. HF resumes partia
 - Sid TODO: fill my_label in results/hand_check.csv (positive/neutral/negative), then `python src/hand_check.py --agree`.
 - 2021 news is thin (62k vs 109k in 2022); check per-stock coverage in Phase 2. Survivorship reduced by 1c, not removed (203 delisted names missing).
 - 2026-11-15 14:48 publishing prep (course submission): README.md, requirements.txt (102 pins), EDGAR UA from SEC_USER_AGENT, docs/ ignored, hand-check artifacts committed (55bf23b, 88c802c). Not pushed. Email remains in history of cdec6c8 (not rewritten).
+- 2026-11-15 14:59 BG JOB export_models: `nohup .venv/bin/python src/export_models.py > logs/export_models.log`; expected models/*, sample/sample_2022.csv.gz
+- 2026-11-15 15:03 export_models DONE (exit 0): refit 2022 fold == committed metrics (max diff 0; preds diff 0 incl. LSTM); sample 7,263 rows/27 tickers/0.61 MB; quickstart.py OK. Not running.

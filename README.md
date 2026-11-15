@@ -1,5 +1,38 @@
 # DS 340W: News sentiment × market regime for next-day beat-the-market
 
+## Quick start (no data download)
+
+This runs the saved final-fold models (trained on 2010–2021, tested on 2022) on a small sample, on CPU, in
+under two minutes. It needs no FNSPID download and no GPU.
+
+```bash
+git clone <this-repo-url> ds340w && cd ds340w
+uv venv --python 3.11 .venv-quick && source .venv-quick/bin/activate
+uv pip install -r requirements-quickstart.txt
+python quickstart.py
+```
+
+`quickstart.py` prints accuracy, AUC and log loss for M0–M3 (logistic), LightGBM and the LSTM on the
+sample's 2022 rows, next to the committed full-panel 2022 numbers. The sample has 27 tickers (the Li-7
+stocks plus 20 random S&P 500 members), so its metrics will not exactly match the full-panel results.
+
+- `models/`: logistic coefficients (`logit_coefs.csv`), LightGBM (`lgbm_M3.txt`), LSTM `state_dict`
+  (`lstm_M3.pt`), and `meta.json` (features, seeds, train-fold preprocessing). They were written by
+  `src/export_models.py`, which refits the 2022 fold with the frozen settings on the frozen pre-2023 data.
+  The refit reproduces the committed 2022 fold metrics exactly (`models/refit_check.csv`). Regenerating it
+  needs the processed data and CUDA.
+- `sample/sample_2022.csv.gz`: every 2022 row of the 27 tickers, plus each ticker's 19 rows before 2022,
+  so the LSTM's 20-day windows are complete. It holds only the preprocessed model inputs, the target `y`,
+  `ticker` and `date`. No headline text is included.
+- Not included: PLACEBO (its test inputs are re-shuffled), M4, and the `_rel`/`_irr` variants.
+
+**Data attribution.** The sentiment and event features in `sample/` are derived from FNSPID (Dong, Fan &
+Peng, 2024, "FNSPID: A Comprehensive Financial News Dataset in Time Series", arXiv:2402.06698). FNSPID is
+licensed [CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/). Changes: headlines were scored
+with FinBERT, tagged for events, and aggregated to daily per-stock features, and no headline text is
+included. The derived sample is shared for non-commercial use under the same license. Price and volume
+features are derived from Yahoo Finance data obtained with yfinance.
+
 ## Question
 
 Does daily news sentiment predict whether an S&P 500 stock beats SPY the next day, and does that
@@ -129,6 +162,7 @@ python src/models_rel.py                   # M2_rel / M3_rel / PLACEBO_rel
 python src/models_irr.py                   # rejected-headline sentiment -> panel_irr.parquet
 python src/evaluate.py                     # all tables (Full and Li-7), H1-H3, portfolios
 python src/figures.py                      # PNG figures, 300 dpi
+python src/export_models.py                # optional: quick-start models/ + sample/ (2022 fold, CUDA)
 
 # 5. Tests and hand check
 pytest tests/
