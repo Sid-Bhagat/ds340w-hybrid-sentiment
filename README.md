@@ -6,7 +6,7 @@ This runs the saved final-fold models (trained on 2010–2021, tested on 2022) o
 under two minutes. It needs no FNSPID download and no GPU.
 
 ```bash
-git clone <this-repo-url> ds340w && cd ds340w
+git clone https://github.com/Sid-Bhagat/ds340w-hybrid-sentiment ds340w && cd ds340w
 uv venv --python 3.11 .venv-quick && source .venv-quick/bin/activate
 uv pip install -r requirements-quickstart.txt
 python quickstart.py
