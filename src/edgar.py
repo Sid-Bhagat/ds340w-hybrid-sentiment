@@ -22,7 +22,16 @@ import requests
 from config import PROC, RAW, START, end_date
 
 EDGAR = RAW / "edgar"
-UA = {"User-Agent": "Siddhant Bhagat REDACTED", "Accept-Encoding": "gzip, deflate"}
+
+
+def user_agent() -> dict:
+    """SEC asks every client to identify itself. Set SEC_USER_AGENT="Your Name your@email" before `fetch`.
+    Read lazily so importing this module (for FEATS_8K, PREDECESSORS, ...) does not need the variable."""
+    ua = os.environ.get("SEC_USER_AGENT")
+    if not ua:
+        raise SystemExit('Set SEC_USER_AGENT="Your Name your@email" to run edgar.py fetch')
+    return {"User-Agent": ua, "Accept-Encoding": "gzip, deflate"}
+
 MIN_GAP = 1 / 8                       # at most 8 requests per second
 FORMS = {"8-K", "8-K/A"}
 ITEMS = {"i202": ["2.02"], "i101": ["1.01"], "i201": ["2.01"], "i502": ["5.02"], "i701_801": ["7.01", "8.01"]}
@@ -53,7 +62,7 @@ def get_json(url, path):
             time.sleep(wait)
         _last[0] = time.time()
         try:
-            r = requests.get(url, headers=UA, timeout=30)
+            r = requests.get(url, headers=user_agent(), timeout=30)
         except requests.RequestException as e:
             print("net error", url, e, flush=True)
             time.sleep(2 ** attempt)

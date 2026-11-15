@@ -40,14 +40,19 @@ def make_sample(n=200):
     print("wrote", OUT, s.shape, s["finbert_label"].value_counts().to_dict())
 
 
-def agreement():
+def agreement(path=OUT, col="my_label"):
     from sklearn.metrics import cohen_kappa_score
-    s = pd.read_csv(OUT).merge(pd.read_csv(KEY), on="id").dropna(subset=["my_label"])
-    s = s.loc[s["my_label"].astype(str).str.strip() != ""]
-    mine = s["my_label"].str.strip().str.lower()
+    s = pd.read_csv(path).merge(pd.read_csv(KEY), on="id").dropna(subset=[col])
+    s = s.loc[s[col].astype(str).str.strip() != ""]
+    mine = s[col].str.strip().str.lower()
     print("n labelled", len(s), "agreement %.3f" % (mine == s["finbert_label"]).mean(),
           "kappa %.3f" % cohen_kappa_score(mine, s["finbert_label"]))
 
 
 if __name__ == "__main__":
-    agreement() if "--agree" in sys.argv else make_sample()
+    def arg(name, default):
+        return sys.argv[sys.argv.index(name) + 1] if name in sys.argv else default
+    if "--agree" in sys.argv:
+        agreement(arg("--input", OUT), arg("--col", "my_label"))
+    else:
+        make_sample()
