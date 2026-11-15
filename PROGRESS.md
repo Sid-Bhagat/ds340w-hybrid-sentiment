@@ -54,3 +54,4 @@ Resume rule: check `ps -p 2091` and log tail before rerunning. HF resumes partia
 - Note: `python -I` breaks `import config` for our own scripts; use -I only for code reading untrusted data.
 - Sid TODO: fill my_label in results/hand_check.csv (positive/neutral/negative), then `python src/hand_check.py --agree`.
 - 2021 news is thin (62k vs 109k in 2022); check per-stock coverage in Phase 2. Survivorship reduced by 1c, not removed (203 delisted names missing).
+- 2026-11-15 14:48 publishing prep (course submission): README.md, requirements.txt (102 pins), EDGAR UA from SEC_USER_AGENT, docs/ ignored, hand-check artifacts committed (55bf23b, 88c802c). Not pushed. Email remains in history of cdec6c8 (not rewritten).
