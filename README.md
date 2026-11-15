@@ -179,14 +179,7 @@ design: `test_2023_sealed`, one case of `test_8k_timing_rule`, and the max-date 
 **Sealed 2023 run:** `FINAL=1` opens 2023. It has already been run once, following `results/FROZEN.md`, and
 its outputs are in `results/final_2023/`. You do not need `FINAL=1` to reproduce the 2018–2022 results.
 
-**Li (2025) replication:** a separate from-scratch implementation lives in `li_replication/`. It has its own
-requirements and venv:
-
-```bash
-cd li_replication
-uv venv --python 3.11 .venv && source .venv/bin/activate && uv pip install -r requirements.txt
-bash run_all.sh
-```
+**Li (2025) replication:** the from-scratch replication of Li (2025) is a separate assignment, in its own repository: [Sid-Bhagat/li2025-pca-hmm-replication](https://github.com/Sid-Bhagat/li2025-pca-hmm-replication).
 
 ## Results
 
@@ -195,7 +188,7 @@ bash run_all.sh
 - **Figures (300 dpi):** [`results/figures/`](results/figures/): cumulative long-short returns, accuracy by fold,
   regime timeline, sentiment coefficient by regime.
 - **Tables:** CSV in `results/`, LaTeX in `results/tables/`.
-- **Li replication:** `li_replication/COMPARISON.md`.
+- **Li replication:** [Sid-Bhagat/li2025-pca-hmm-replication](https://github.com/Sid-Bhagat/li2025-pca-hmm-replication).
 - **Hand check of FinBERT labels:** `results/hand_check_agreement.md`.
 
 ## Known limitations

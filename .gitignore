@@ -5,3 +5,4 @@ __pycache__/
 logs/
 docs/
 .venv-quick/
+li_replication/
